@@ -19,15 +19,29 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
 
 ### HACS (Recommended)
 
-1. Open HACS in your Home Assistant instance
-2. Go to "Integrations"
-3. Click the three dots in the top right corner
-4. Select "Custom repositories"
-5. Add this repository URL: `https://github.com/your-username/bluetooth-to-airplay-bridge`
-6. Select "Integration" as the category
-7. Click "Add"
-8. Find "Bluetooth to AirPlay Bridge" in the integration list and install it
-9. Restart Home Assistant
+#### Method 1: Add as Custom Repository (Available Now)
+
+1. **Open HACS** in your Home Assistant instance
+2. **Go to "Integrations"** tab
+3. **Click the 3-dot menu** (⋮) in the top right corner
+4. **Select "Custom repositories"**
+5. **Add Repository**:
+   - **Repository URL**: `https://github.com/jhaleit/bluetooth-to-airplay-bridge`
+   - **Category**: `Integration`
+6. **Click "Add"**
+7. **Search** for "Bluetooth to AirPlay Bridge" in HACS
+8. **Install** the integration
+9. **Restart** Home Assistant
+10. **Add Integration** via Settings → Devices & Services
+
+#### Method 2: Default HACS Store (Coming Soon)
+
+This integration will be submitted to the official HACS store for easier discovery. Once approved, you'll be able to find it directly in HACS without adding a custom repository.
+
+**To submit to HACS default store:**
+- Visit: https://github.com/hacs/default/issues/new/choose
+- Choose "Integration" template
+- Repository: `https://github.com/jhaleit/bluetooth-to-airplay-bridge`
 
 ### Manual Installation
 
@@ -124,18 +138,51 @@ bluetoothctl devices
 bluetoothctl info [DEVICE_ADDRESS]
 ```
 
+## HACS Integration
+
+### Current Status: ✅ Available as Custom Repository
+
+This integration is **ready for HACS** and can be installed immediately using the custom repository method above.
+
+### Submitting to Official HACS Store
+
+To get this integration included in the default HACS store:
+
+1. **Visit**: https://github.com/hacs/default/issues/new/choose
+2. **Select**: "Integration" template
+3. **Fill out**:
+   - Repository: `https://github.com/jhaleit/bluetooth-to-airplay-bridge`
+   - Description: Home Assistant integration that bridges Bluetooth speakers to AirPlay
+4. **Submit** and wait for review
+5. **Address** any feedback from HACS maintainers
+
+### Benefits of Official HACS Store
+
+- ✅ Automatic discovery by all HACS users
+- ✅ No need to add custom repository
+- ✅ Better visibility in the community
+- ✅ Automatic update notifications
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Setup
+
+1. Fork this repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `pytest tests/`
+5. Submit a pull request
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-[releases-shield]: https://img.shields.io/github/release/your-username/bluetooth-to-airplay-bridge.svg?style=for-the-badge
-[releases]: https://github.com/your-username/bluetooth-to-airplay-bridge/releases
-[commits-shield]: https://img.shields.io/github/commit-activity/y/your-username/bluetooth-to-airplay-bridge.svg?style=for-the-badge
-[commits]: https://github.com/your-username/bluetooth-to-airplay-bridge/commits/main
-[license-shield]: https://img.shields.io/github/license/your-username/bluetooth-to-airplay-bridge.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/jhaleit/bluetooth-to-airplay-bridge.svg?style=for-the-badge
+[releases]: https://github.com/jhaleit/bluetooth-to-airplay-bridge/releases
+[commits-shield]: https://img.shields.io/github/commit-activity/y/jhaleit/bluetooth-to-airplay-bridge.svg?style=for-the-badge
+[commits]: https://github.com/jhaleit/bluetooth-to-airplay-bridge/commits/main
+[license-shield]: https://img.shields.io/github/license/jhaleit/bluetooth-to-airplay-bridge.svg?style=for-the-badge
 [hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
