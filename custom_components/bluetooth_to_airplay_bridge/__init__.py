@@ -48,6 +48,16 @@ PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 RECONNECT_INTERVAL = timedelta(minutes=1)
 
 
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
+    """Set up the Bluetooth to AirPlay Bridge integration."""
+    _LOGGER.info("Setting up Bluetooth to AirPlay Bridge integration")
+    
+    # Initialize the domain data
+    hass.data.setdefault(DOMAIN, {})
+    
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Bluetooth to AirPlay Bridge from a config entry."""
     _LOGGER.debug(
