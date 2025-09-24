@@ -130,3 +130,9 @@ class BluetoothAirPlayMediaPlayer(MediaPlayerEntity):
         """Update the entity."""
         # The coordinator handles the state updates
         pass
+
+    async def async_remove(self) -> None:
+        """Remove the entity and disconnect Bluetooth device."""
+        _LOGGER.info("Removing media player entity and disconnecting Bluetooth device")
+        await self._coordinator.async_stop()
+        await super().async_remove()

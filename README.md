@@ -5,22 +5,23 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v0.7** - Critical ConfigFlow fix for Home Assistant integration
+**Latest Release: v0.8** - Enhanced Bluetooth device management and cleanup
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol.
 
-## What's New in v0.7
+## What's New in v0.8
 
-🔧 **Critical ConfigFlow Fix**
-- ✅ **FIXED**: "Invalid handler specified" error that prevented integration setup
-- ✅ Corrected ConfigFlow class inheritance syntax to match Home Assistant requirements
-- ✅ Integration now properly loads and appears in Home Assistant UI
-- ✅ Resolves setup issues reported by users
+🔌 **Enhanced Bluetooth Device Management**
+- ✅ **NEW**: Automatic Bluetooth disconnection when speaker is removed from Home Assistant
+- ✅ **NEW**: `disconnect_bluetooth` service for manual Bluetooth device disconnection
+- ✅ **IMPROVED**: Proper cleanup when integration is unloaded or entities are removed
+- ✅ **ENHANCED**: Better device lifecycle management with automatic resource cleanup
 
-🚀 **Improved Stability**
-- ✅ Enhanced error handling and debugging information
-- ✅ Better integration with Home Assistant's config flow system
-- ✅ Comprehensive testing and validation
+🚀 **Improved Integration Lifecycle**
+- ✅ Enhanced `async_remove()` method in media player entity
+- ✅ Automatic Bluetooth disconnection during integration shutdown
+- ✅ Better error handling for Bluetooth disconnection operations
+- ✅ Comprehensive logging for device management operations
 
 ## Features
 

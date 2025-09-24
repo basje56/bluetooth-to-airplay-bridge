@@ -33,6 +33,7 @@ ERROR_AIRPLAY_SETUP_FAILED: Final = "airplay_setup_failed"
 SERVICE_START_BRIDGE: Final = "start_bridge"
 SERVICE_STOP_BRIDGE: Final = "stop_bridge"
 SERVICE_RECONNECT: Final = "reconnect"
+SERVICE_DISCONNECT_BLUETOOTH: Final = "disconnect_bluetooth"
 
 # Attributes
 ATTR_BLUETOOTH_ADDRESS: Final = "bluetooth_address"

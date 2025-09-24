@@ -29,6 +29,7 @@ from .const import (
     CONF_BLUETOOTH_ADDRESS,
     CONF_BLUETOOTH_NAME,
     DOMAIN,
+    SERVICE_DISCONNECT_BLUETOOTH,
     SERVICE_RECONNECT,
     SERVICE_START_BRIDGE,
     SERVICE_STOP_BRIDGE,
@@ -125,9 +126,14 @@ async def _async_register_services(
         """Reconnect to the Bluetooth device."""
         await coordinator.async_reconnect()
 
+    async def disconnect_bluetooth_service(call: ServiceCall) -> None:
+        """Disconnect the Bluetooth device."""
+        await coordinator._async_disconnect_bluetooth_device()
+
     hass.services.async_register(DOMAIN, SERVICE_START_BRIDGE, start_bridge_service)
     hass.services.async_register(DOMAIN, SERVICE_STOP_BRIDGE, stop_bridge_service)
     hass.services.async_register(DOMAIN, SERVICE_RECONNECT, reconnect_service)
+    hass.services.async_register(DOMAIN, SERVICE_DISCONNECT_BLUETOOTH, disconnect_bluetooth_service)
 
 
 class BluetoothAirPlayCoordinator:
@@ -229,6 +235,7 @@ class BluetoothAirPlayCoordinator:
             self._reconnect_task.cancel()
 
         await self._async_stop_airplay_bridge()
+        await self._async_disconnect_bluetooth_device()
         self._state = STATE_DISCONNECTED
 
     async def async_reconnect(self) -> None:
@@ -357,3 +364,37 @@ class BluetoothAirPlayCoordinator:
                 _LOGGER.error("Error stopping AirPlay bridge: %s", err)
             finally:
                 self._bridge_process = None
+
+    async def _async_disconnect_bluetooth_device(self) -> None:
+        """Disconnect the Bluetooth device."""
+        try:
+            _LOGGER.info("Disconnecting Bluetooth device: %s", self.bluetooth_address)
+            
+            # Use bluetoothctl to disconnect the device
+            disconnect_cmd = [
+                "bluetoothctl",
+                "disconnect",
+                self.bluetooth_address
+            ]
+            
+            process = await asyncio.create_subprocess_exec(
+                *disconnect_cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=10)
+            
+            if process.returncode == 0:
+                _LOGGER.info("Successfully disconnected Bluetooth device: %s", self.bluetooth_address)
+            else:
+                _LOGGER.warning(
+                    "Failed to disconnect Bluetooth device %s: %s", 
+                    self.bluetooth_address, 
+                    stderr.decode().strip()
+                )
+                
+        except asyncio.TimeoutError:
+            _LOGGER.error("Timeout while disconnecting Bluetooth device: %s", self.bluetooth_address)
+        except Exception as err:
+            _LOGGER.error("Error disconnecting Bluetooth device %s: %s", self.bluetooth_address, err)
