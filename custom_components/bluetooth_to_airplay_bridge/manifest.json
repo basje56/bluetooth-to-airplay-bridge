@@ -9,13 +9,11 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/jhaleit/bluetooth-to-airplay-bridge/issues",
   "requirements": [
-    "pygobject>=3.42.0",
-    "pycairo>=1.20.0",
     "zeroconf>=0.47.0",
     "cryptography>=3.4.8",
     "pydbus>=0.6.0"
   ],
-  "version": "0.10.0",
+  "version": "0.10.1",
   "bluetooth": [
     {
       "service_uuid": "0000110b-0000-1000-8000-00805f9b34fb"

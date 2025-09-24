@@ -1,0 +1,17 @@
+# Optional dependencies for enhanced audio features
+# These are not required for basic functionality but enable advanced audio processing
+
+# GStreamer Python bindings for advanced audio pipeline management
+# Note: Requires system GStreamer libraries to be installed first
+# On Ubuntu/Debian: sudo apt-get install gstreamer1.0-dev libgirepository1.0-dev
+# On macOS: brew install gstreamer gobject-introspection
+# On Fedora: sudo dnf install gstreamer1-devel gobject-introspection-devel
+pygobject>=3.42.0
+
+# Cairo Python bindings (dependency of pygobject)
+# Usually installed automatically with pygobject
+pycairo>=1.20.0
+
+# Additional audio processing libraries (optional)
+# numpy>=1.21.0  # For audio signal processing
+# scipy>=1.7.0   # For advanced audio filters
