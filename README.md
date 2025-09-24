@@ -5,7 +5,22 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
+**Latest Release: v1.0.4** - Stable release with integration discovery fixes
+
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol.
+
+## What's New in v1.0.4
+
+🔧 **Integration Discovery Fixes**
+- ✅ Fixed ConfigFlow domain property that was preventing integration from appearing in Home Assistant
+- ✅ Added required `async_setup` function for proper integration discovery
+- ✅ Stable release version for full HACS compatibility
+- ✅ Integration now properly appears in Settings → Devices & Services
+
+🚀 **Improved Installation Experience**
+- ✅ Seamless HACS installation without manual workarounds
+- ✅ Proper GitHub release with comprehensive changelog
+- ✅ Enhanced troubleshooting documentation
 
 ## Features
 
@@ -17,9 +32,9 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
 
 ## Installation
 
-### HACS (Recommended)
+### HACS (Recommended) ✅ **Now Working!**
 
-#### Method 1: Add as Custom Repository (Available Now)
+#### Method 1: Add as Custom Repository (Ready for Use)
 
 1. **Open HACS** in your Home Assistant instance
 2. **Go to "Integrations"** tab
@@ -30,9 +45,11 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
    - **Category**: `Integration`
 6. **Click "Add"**
 7. **Search** for "Bluetooth to AirPlay Bridge" in HACS
-8. **Install** the integration
+8. **Install** the integration (v1.0.4 or later)
 9. **Restart** Home Assistant
-10. **Add Integration** via Settings → Devices & Services
+10. **Add Integration** via Settings → Devices & Services → Add Integration
+
+> **Note**: After installing v1.0.4, the integration will properly appear in your Home Assistant integration list. Previous versions had discovery issues that are now resolved.
 
 #### Method 2: Default HACS Store (Coming Soon)
 
@@ -120,10 +137,22 @@ logger:
 
 ### Common Issues
 
-1. **Bluetooth not available**: Ensure your Home Assistant host has a working Bluetooth adapter
-2. **Device not found**: Make sure the device is in pairing mode and within range
-3. **Pairing failed**: Try resetting the Bluetooth device and clearing any existing pairings
-4. **Connection drops**: Check Bluetooth signal strength and interference
+1. **Integration not appearing in Home Assistant** (Fixed in v1.0.4):
+   - **Solution**: Update to v1.0.4 or later
+   - **Cause**: Previous versions had ConfigFlow domain property issues
+   - **Verification**: Check that you can find "Bluetooth to AirPlay Bridge" in Settings → Devices & Services → Add Integration
+
+2. **HACS not showing latest version**:
+   - **Solution**: Wait 15-30 minutes for HACS to detect new releases, or force refresh HACS
+   - **Note**: Debug versions (like v1.0.3.debug) are not shown in HACS - use stable releases only
+
+3. **Bluetooth not available**: Ensure your Home Assistant host has a working Bluetooth adapter
+
+4. **Device not found**: Make sure the device is in pairing mode and within range
+
+5. **Pairing failed**: Try resetting the Bluetooth device and clearing any existing pairings
+
+6. **Connection drops**: Check Bluetooth signal strength and interference
 
 ### Debug Commands
 
@@ -140,9 +169,9 @@ bluetoothctl info [DEVICE_ADDRESS]
 
 ## HACS Integration
 
-### Current Status: ✅ Available as Custom Repository
+### Current Status: ✅ Fully Working as Custom Repository
 
-This integration is **ready for HACS** and can be installed immediately using the custom repository method above.
+This integration is **fully functional in HACS** with v1.0.4 and can be installed immediately using the custom repository method above. All previous integration discovery issues have been resolved.
 
 ### Submitting to Official HACS Store
 
