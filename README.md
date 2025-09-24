@@ -5,11 +5,11 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v1.0.5** - Critical ConfigFlow fix for Home Assistant integration
+**Latest Release: v0.7** - Critical ConfigFlow fix for Home Assistant integration
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol.
 
-## What's New in v1.0.5
+## What's New in v0.7
 
 🔧 **Critical ConfigFlow Fix**
 - ✅ **FIXED**: "Invalid handler specified" error that prevented integration setup
@@ -21,14 +21,6 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
 - ✅ Enhanced error handling and debugging information
 - ✅ Better integration with Home Assistant's config flow system
 - ✅ Comprehensive testing and validation
-
-## Previous Versions
-
-### v1.0.4 - Integration Discovery Fixes
-- ✅ Fixed ConfigFlow domain property that was preventing integration from appearing in Home Assistant
-- ✅ Added required `async_setup` function for proper integration discovery
-- ✅ Stable release version for full HACS compatibility
-- ✅ Integration now properly appears in Settings → Devices & Services
 
 ## Features
 
