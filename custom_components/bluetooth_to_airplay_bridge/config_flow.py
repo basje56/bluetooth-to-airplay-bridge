@@ -8,7 +8,12 @@ from typing import Any, Dict, List, Optional
 import voluptuous as vol  # type: ignore
 
 from homeassistant import config_entries  # type: ignore
-from homeassistant.components import bluetooth  # type: ignore
+try:
+    from homeassistant.components import bluetooth  # type: ignore
+    BLUETOOTH_AVAILABLE = True
+except ImportError:
+    BLUETOOTH_AVAILABLE = False
+    bluetooth = None
 from homeassistant.const import CONF_NAME  # type: ignore
 from homeassistant.core import HomeAssistant  # type: ignore
 from homeassistant.data_entry_flow import FlowResult  # type: ignore
@@ -83,7 +88,7 @@ class ConfigFlow(config_entries.ConfigFlow):
                     errors["base"] = ERROR_DEVICE_NOT_FOUND
 
         # Check if Bluetooth is available
-        if not bluetooth.async_scanner_count(self.hass):
+        if not BLUETOOTH_AVAILABLE or not bluetooth or not bluetooth.async_scanner_count(self.hass):
             errors["base"] = ERROR_BLUETOOTH_NOT_AVAILABLE
             return self.async_show_form(
                 step_id="scan",

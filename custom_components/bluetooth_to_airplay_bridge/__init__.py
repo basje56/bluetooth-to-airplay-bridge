@@ -7,7 +7,12 @@ import subprocess
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-from homeassistant.components import bluetooth  # type: ignore
+try:
+    from homeassistant.components import bluetooth  # type: ignore
+    BLUETOOTH_AVAILABLE = True
+except ImportError:
+    BLUETOOTH_AVAILABLE = False
+    bluetooth = None
 from homeassistant.config_entries import ConfigEntry  # type: ignore
 from homeassistant.const import Platform  # type: ignore
 from homeassistant.core import HomeAssistant, ServiceCall  # type: ignore
@@ -53,9 +58,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     # Check if Bluetooth is available
-    if not bluetooth.async_scanner_count(hass):
-        _LOGGER.error("Bluetooth is not available")
-        raise ConfigEntryNotReady("Bluetooth is not available")
+    if not BLUETOOTH_AVAILABLE or not bluetooth or not bluetooth.async_scanner_count(hass):
+        _LOGGER.error("Bluetooth is not available or not configured")
+        raise ConfigEntryNotReady("Bluetooth is not available or not configured")
 
     # Create coordinator
     coordinator = BluetoothAirPlayCoordinator(hass, entry)
