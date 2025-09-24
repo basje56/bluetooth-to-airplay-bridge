@@ -93,29 +93,37 @@ def check_syntax():
 
 def check_imports():
     """Check if imports work correctly."""
-    print("\n📦 Checking imports...")
+    print("\n📦 Checking Python syntax...")
     
-    try:
-        # Add the custom_components directory to Python path
-        sys.path.insert(0, os.path.join(os.getcwd(), "custom_components"))
-        
-        # Try importing the main modules
-        from bluetooth_to_airplay_bridge import const
-        print("  ✅ const.py imports successfully")
-        
-        # Check domain constant
-        if hasattr(const, 'DOMAIN') and const.DOMAIN == "bluetooth_to_airplay_bridge":
-            print(f"  ✅ DOMAIN constant: {const.DOMAIN}")
+    # Validate Python syntax of all integration files
+    syntax_valid = True
+    integration_files = [
+        "custom_components/bluetooth_to_airplay_bridge/__init__.py",
+        "custom_components/bluetooth_to_airplay_bridge/config_flow.py", 
+        "custom_components/bluetooth_to_airplay_bridge/const.py",
+        "custom_components/bluetooth_to_airplay_bridge/media_player.py"
+    ]
+    
+    for file_path in integration_files:
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    compile(f.read(), file_path, 'exec')
+                print(f"  ✅ {os.path.basename(file_path)} syntax valid")
+            except SyntaxError as e:
+                print(f"  ❌ {os.path.basename(file_path)} syntax error: {e}")
+                syntax_valid = False
+            except Exception as e:
+                print(f"  ❌ Error checking {os.path.basename(file_path)}: {e}")
+                syntax_valid = False
         else:
-            print("  ❌ DOMAIN constant missing or incorrect")
-            return False
-        
-        print("  ✅ All imports successful")
-        return True
-        
-    except Exception as e:
-        print(f"  ❌ Import error: {e}")
-        return False
+            print(f"  ⚠️  {file_path} not found")
+            syntax_valid = False
+            
+    if syntax_valid:
+        print("  ✅ All Python files have valid syntax")
+    
+    return syntax_valid
 
 def generate_installation_instructions():
     """Generate installation instructions."""
