@@ -5,22 +5,30 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v1.0.4** - Stable release with integration discovery fixes
+**Latest Release: v1.0.5** - Critical ConfigFlow fix for Home Assistant integration
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol.
 
-## What's New in v1.0.4
+## What's New in v1.0.5
 
-🔧 **Integration Discovery Fixes**
+🔧 **Critical ConfigFlow Fix**
+- ✅ **FIXED**: "Invalid handler specified" error that prevented integration setup
+- ✅ Corrected ConfigFlow class inheritance syntax to match Home Assistant requirements
+- ✅ Integration now properly loads and appears in Home Assistant UI
+- ✅ Resolves setup issues reported by users
+
+🚀 **Improved Stability**
+- ✅ Enhanced error handling and debugging information
+- ✅ Better integration with Home Assistant's config flow system
+- ✅ Comprehensive testing and validation
+
+## Previous Versions
+
+### v1.0.4 - Integration Discovery Fixes
 - ✅ Fixed ConfigFlow domain property that was preventing integration from appearing in Home Assistant
 - ✅ Added required `async_setup` function for proper integration discovery
 - ✅ Stable release version for full HACS compatibility
 - ✅ Integration now properly appears in Settings → Devices & Services
-
-🚀 **Improved Installation Experience**
-- ✅ Seamless HACS installation without manual workarounds
-- ✅ Proper GitHub release with comprehensive changelog
-- ✅ Enhanced troubleshooting documentation
 
 ## Features
 
@@ -45,11 +53,11 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
    - **Category**: `Integration`
 6. **Click "Add"**
 7. **Search** for "Bluetooth to AirPlay Bridge" in HACS
-8. **Install** the integration (v1.0.4 or later)
+8. **Install** the integration (v1.0.5 or later)
 9. **Restart** Home Assistant
 10. **Add Integration** via Settings → Devices & Services → Add Integration
 
-> **Note**: After installing v1.0.4, the integration will properly appear in your Home Assistant integration list. Previous versions had discovery issues that are now resolved.
+> **Note**: After installing v1.0.5, the integration will properly load and appear in your Home Assistant integration list. This version fixes the critical "Invalid handler specified" error that prevented setup in previous versions.
 
 #### Method 2: Default HACS Store (Coming Soon)
 
