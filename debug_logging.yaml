@@ -1,0 +1,21 @@
+# Add this to your configuration.yaml to enable debug logging
+# for the Bluetooth to AirPlay Bridge integration
+
+logger:
+  default: info
+  logs:
+    # Integration-specific logging
+    custom_components.bluetooth_to_airplay_bridge: debug
+    
+    # Home Assistant core logging for config flows
+    homeassistant.config_entries: debug
+    homeassistant.helpers.discovery_flow: debug
+    
+    # Bluetooth-related logging (optional, for deeper debugging)
+    homeassistant.components.bluetooth: info
+    
+# After adding this configuration:
+# 1. Save the file
+# 2. Restart Home Assistant
+# 3. Check logs for "Bluetooth to AirPlay Bridge integration module loaded successfully"
+# 4. Look for any error messages during startup
