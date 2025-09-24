@@ -39,11 +39,10 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.info("Bluetooth to AirPlay Bridge config flow module loaded successfully")
 
 
-class ConfigFlow(config_entries.ConfigFlow):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Bluetooth to AirPlay Bridge."""
 
     VERSION = 1
-    domain = DOMAIN
 
     def __init__(self) -> None:
         """Initialize the config flow."""
