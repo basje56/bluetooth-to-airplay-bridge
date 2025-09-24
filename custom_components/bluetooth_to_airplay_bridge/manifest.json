@@ -1,18 +1,24 @@
 {
   "domain": "bluetooth_to_airplay_bridge",
   "name": "Bluetooth to AirPlay Bridge",
-  "codeowners": ["@your-github-username"],
+  "codeowners": ["@jhaleit"],
   "config_flow": true,
   "dependencies": ["bluetooth"],
-  "documentation": "https://github.com/your-username/bluetooth-to-airplay-bridge",
+  "documentation": "https://github.com/jhaleit/bluetooth-to-airplay-bridge",
   "integration_type": "device",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/your-username/bluetooth-to-airplay-bridge/issues",
+  "issue_tracker": "https://github.com/jhaleit/bluetooth-to-airplay-bridge/issues",
   "requirements": [],
   "version": "1.0.0",
   "bluetooth": [
     {
-      "local_name": "*"
+      "service_uuid": "0000110b-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "service_uuid": "0000110a-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "service_uuid": "0000110e-0000-1000-8000-00805f9b34fb"
     }
   ]
 }
