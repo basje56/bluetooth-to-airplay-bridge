@@ -9,7 +9,7 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/jhaleit/bluetooth-to-airplay-bridge/issues",
   "requirements": [],
-  "version": "1.0.2",
+  "version": "1.0.3",
   "bluetooth": [
     {
       "service_uuid": "0000110b-0000-1000-8000-00805f9b34fb"
