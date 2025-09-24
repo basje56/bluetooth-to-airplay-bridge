@@ -5,23 +5,17 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v0.8** - Enhanced Bluetooth device management and cleanup
+**Latest Release: v0.8** - Enhanced Device Management & Stability
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol.
 
 ## What's New in v0.8
 
-🔌 **Enhanced Bluetooth Device Management**
-- ✅ **NEW**: Automatic Bluetooth disconnection when speaker is removed from Home Assistant
-- ✅ **NEW**: `disconnect_bluetooth` service for manual Bluetooth device disconnection
-- ✅ **IMPROVED**: Proper cleanup when integration is unloaded or entities are removed
-- ✅ **ENHANCED**: Better device lifecycle management with automatic resource cleanup
-
-🚀 **Improved Integration Lifecycle**
-- ✅ Enhanced `async_remove()` method in media player entity
-- ✅ Automatic Bluetooth disconnection during integration shutdown
-- ✅ Better error handling for Bluetooth disconnection operations
-- ✅ Comprehensive logging for device management operations
+🔌 **Enhanced Device Management**
+- ✅ Automatic Bluetooth disconnection when speaker is removed from Home Assistant
+- ✅ `disconnect_bluetooth` service for manual Bluetooth device disconnection
+- ✅ Proper cleanup when integration is unloaded or entities are removed
+- ✅ Enhanced device lifecycle management with automatic resource cleanup
 
 ## Features
 
@@ -46,11 +40,11 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
    - **Category**: `Integration`
 6. **Click "Add"**
 7. **Search** for "Bluetooth to AirPlay Bridge" in HACS
-8. **Install** the integration (v1.0.5 or later)
+8. **Install** the integration (v0.8 or later)
 9. **Restart** Home Assistant
 10. **Add Integration** via Settings → Devices & Services → Add Integration
 
-> **Note**: After installing v1.0.5, the integration will properly load and appear in your Home Assistant integration list. This version fixes the critical "Invalid handler specified" error that prevented setup in previous versions.
+> **Note**: After installing v0.8, the integration will properly load and appear in your Home Assistant integration list. This version includes enhanced device management and stability improvements.
 
 #### Method 2: Default HACS Store (Coming Soon)
 
@@ -138,14 +132,14 @@ logger:
 
 ### Common Issues
 
-1. **Integration not appearing in Home Assistant** (Fixed in v1.0.4):
-   - **Solution**: Update to v1.0.4 or later
+1. **Integration not appearing in Home Assistant**:
+   - **Solution**: Ensure you're using v0.8 or later
    - **Cause**: Previous versions had ConfigFlow domain property issues
    - **Verification**: Check that you can find "Bluetooth to AirPlay Bridge" in Settings → Devices & Services → Add Integration
 
 2. **HACS not showing latest version**:
    - **Solution**: Wait 15-30 minutes for HACS to detect new releases, or force refresh HACS
-   - **Note**: Debug versions (like v1.0.3.debug) are not shown in HACS - use stable releases only
+   - **Note**: Use stable releases only
 
 3. **Bluetooth not available**: Ensure your Home Assistant host has a working Bluetooth adapter
 
@@ -172,7 +166,7 @@ bluetoothctl info [DEVICE_ADDRESS]
 
 ### Current Status: ✅ Fully Working as Custom Repository
 
-This integration is **fully functional in HACS** with v1.0.4 and can be installed immediately using the custom repository method above. All previous integration discovery issues have been resolved.
+This integration is **fully functional in HACS** with v0.8 and can be installed immediately using the custom repository method above. All previous integration discovery issues have been resolved.
 
 ### Submitting to Official HACS Store
 
