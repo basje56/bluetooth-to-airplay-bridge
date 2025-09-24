@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bluetooth to AirPlay Bridge Setup",
+        "description": "Put the Bluetooth speaker into discover mode. Then click Next.",
+        "data": {}
+      },
+      "scan": {
+        "title": "Scan for Bluetooth Devices",
+        "description": "Scanning for Bluetooth devices...\n\n{scan_status}",
+        "data": {
+          "selected_device": "Select Device"
+        }
+      },
+      "pair": {
+        "title": "Pair with Device",
+        "description": "Device: {device_name} ({device_address})\n\n{pair_status}\n\nClick the checkbox to pair with this device.",
+        "data": {
+          "pair_device": "Pair with device"
+        }
+      },
+      "configure": {
+        "title": "Configure AirPlay Bridge",
+        "description": "Device: {device_name} ({device_address})\n\nConfigure your AirPlay bridge settings:",
+        "data": {
+          "airplay_version": "AirPlay Version",
+          "airplay_name": "AirPlay Server Name"
+        }
+      }
+    },
+    "error": {
+      "bluetooth_not_available": "Bluetooth is not available on this system",
+      "device_not_found": "Selected device not found",
+      "pairing_failed": "Failed to pair with the device",
+      "scan_failed": "Failed to scan for devices",
+      "no_devices_found": "No Bluetooth devices found",
+      "name_required": "AirPlay server name is required",
+      "name_too_long": "AirPlay server name is too long (max 50 characters)"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  }
+}

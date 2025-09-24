@@ -1,0 +1,7 @@
+{
+  "name": "Bluetooth to AirPlay Bridge",
+  "hacs": "1.6.0",
+  "domains": ["media_player"],
+  "iot_class": "Local Push",
+  "homeassistant": "2023.1.0"
+}
