@@ -35,6 +35,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Log that the config flow module is being loaded
+_LOGGER.info("Bluetooth to AirPlay Bridge config flow module loaded successfully")
+
 
 class ConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for Bluetooth to AirPlay Bridge."""
@@ -51,6 +54,8 @@ class ConfigFlow(config_entries.ConfigFlow):
         self, discovery_info: dict[str, Any]
     ) -> FlowResult:
         """Handle Bluetooth discovery."""
+        _LOGGER.info("Bluetooth discovery step called with info: %s", discovery_info)
+        
         if not BLUETOOTH_AVAILABLE:
             return self.async_abort(reason="bluetooth_not_available")
         

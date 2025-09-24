@@ -40,6 +40,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Log that the integration module is being loaded
+_LOGGER.info("Bluetooth to AirPlay Bridge integration module loaded successfully")
+
 PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
 RECONNECT_INTERVAL = timedelta(minutes=1)
