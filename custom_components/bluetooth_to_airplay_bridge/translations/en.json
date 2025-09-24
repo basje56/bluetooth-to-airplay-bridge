@@ -39,7 +39,9 @@
       "name_too_long": "AirPlay server name is too long (max 50 characters)"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured",
+      "bluetooth_not_available": "Bluetooth is not available on this system",
+      "no_device_address": "No device address provided in discovery"
     }
   },
   "options": {

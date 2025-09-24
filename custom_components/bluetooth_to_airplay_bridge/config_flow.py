@@ -47,6 +47,36 @@ class ConfigFlow(config_entries.ConfigFlow):
         self._discovered_devices: list[dict[str, Any]] = []
         self._selected_device: dict[str, Any] | None = None
 
+    async def async_step_bluetooth(
+        self, discovery_info: dict[str, Any]
+    ) -> FlowResult:
+        """Handle Bluetooth discovery."""
+        if not BLUETOOTH_AVAILABLE:
+            return self.async_abort(reason="bluetooth_not_available")
+        
+        # Extract device information from discovery
+        device_address = discovery_info.get("address")
+        device_name = discovery_info.get("name", "Unknown Device")
+        
+        if not device_address:
+            return self.async_abort(reason="no_device_address")
+        
+        # Check if already configured
+        await self.async_set_unique_id(device_address)
+        self._abort_if_unique_id_configured()
+        
+        # Store discovered device info
+        self._selected_device = {
+            "address": device_address,
+            "name": device_name,
+        }
+        
+        # Set the title for the flow
+        self.context["title_placeholders"] = {"name": device_name}
+        
+        # Go directly to configuration step since device is already discovered
+        return await self.async_step_configure()
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
