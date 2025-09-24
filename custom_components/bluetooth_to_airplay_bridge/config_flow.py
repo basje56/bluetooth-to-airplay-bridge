@@ -32,6 +32,7 @@ from .const import (
     ERROR_DEVICE_NOT_FOUND,
     ERROR_PAIRING_FAILED,
 )
+from .audio_config import AudioQuality
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,10 +40,17 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.info("Bluetooth to AirPlay Bridge config flow module loaded successfully")
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for Bluetooth to AirPlay Bridge."""
 
     VERSION = 1
+    
+    @staticmethod
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return OptionsFlowHandler(config_entry)
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -361,3 +369,73 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options flow for Bluetooth to AirPlay Bridge."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the options."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            # Validate input
+            airplay_name = user_input.get(CONF_AIRPLAY_NAME, "").strip()
+            if not airplay_name:
+                errors[CONF_AIRPLAY_NAME] = "name_required"
+            elif len(airplay_name) > 50:
+                errors[CONF_AIRPLAY_NAME] = "name_too_long"
+
+            if not errors:
+                # Update the config entry
+                return self.async_create_entry(
+                    title="",
+                    data={
+                        CONF_AIRPLAY_NAME: airplay_name,
+                        CONF_AIRPLAY_VERSION: user_input[CONF_AIRPLAY_VERSION],
+                        "audio_quality": user_input.get("audio_quality", AudioQuality.MEDIUM.value),
+                        "auto_reconnect": user_input.get("auto_reconnect", True),
+                        "connection_timeout": user_input.get("connection_timeout", 30),
+                    },
+                )
+
+        # Get current values
+        current_airplay_name = self.config_entry.data.get(CONF_AIRPLAY_NAME, DEFAULT_AIRPLAY_NAME)
+        current_airplay_version = self.config_entry.data.get(CONF_AIRPLAY_VERSION, AIRPLAY_VERSIONS[1])
+        current_audio_quality = self.config_entry.options.get("audio_quality", AudioQuality.MEDIUM.value)
+        current_auto_reconnect = self.config_entry.options.get("auto_reconnect", True)
+        current_connection_timeout = self.config_entry.options.get("connection_timeout", 30)
+
+        # Create audio quality options
+        audio_quality_options = {
+            AudioQuality.LOW.value: "Low (SBC 128kbps)",
+            AudioQuality.MEDIUM.value: "Medium (SBC 256kbps)",
+            AudioQuality.HIGH.value: "High (AAC 320kbps)",
+            AudioQuality.LOSSLESS.value: "Lossless (LDAC 990kbps)",
+        }
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(CONF_AIRPLAY_NAME, default=current_airplay_name): str,
+                vol.Required(CONF_AIRPLAY_VERSION, default=current_airplay_version): vol.In(
+                    {version: f"AirPlay {version[-1]}" for version in AIRPLAY_VERSIONS}
+                ),
+                vol.Required("audio_quality", default=current_audio_quality): vol.In(audio_quality_options),
+                vol.Required("auto_reconnect", default=current_auto_reconnect): bool,
+                vol.Required("connection_timeout", default=current_connection_timeout): vol.All(
+                    vol.Coerce(int), vol.Range(min=10, max=120)
+                ),
+            }),
+            errors=errors,
+            description_placeholders={
+                "device_name": self.config_entry.data.get(CONF_BLUETOOTH_NAME, "Unknown Device"),
+                "device_address": self.config_entry.data.get(CONF_BLUETOOTH_ADDRESS, "Unknown Address"),
+            },
+        )

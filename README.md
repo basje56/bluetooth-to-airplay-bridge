@@ -5,11 +5,54 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v0.8** - Enhanced Device Management & Stability
+**Latest Release: v0.10** - Complete AirPlay Discovery & Production Ready
 
-A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol.
+A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol with advanced audio configuration and quality control.
 
-## What's New in v0.8
+## What's New in v0.10
+
+🚀 **Production Ready Release**
+- ✅ Complete AirPlay Discovery implementation with full network integration
+- ✅ Comprehensive test coverage for all major components (AirPlay discovery, device management, audio streaming)
+- ✅ Enhanced documentation with detailed setup guides and troubleshooting
+- ✅ Full HACS compatibility with automated validation and CI/CD pipeline
+- ✅ Production-grade error handling and logging throughout the codebase
+
+🔍 **Advanced AirPlay Discovery**
+- ✅ Real-time AirPlay receiver discovery and monitoring using Zeroconf/mDNS
+- ✅ Support for AirPlay 1 and AirPlay 2 device detection with capability analysis
+- ✅ Network service management with start/stop/refresh discovery controls
+- ✅ Comprehensive device information including model, features, and audio capabilities
+- ✅ Integration with Home Assistant services for programmatic control
+
+🧪 **Comprehensive Testing & Validation**
+- ✅ Full test suite covering AirPlay discovery, device management, and audio streaming
+- ✅ Automated syntax validation and linting
+- ✅ GitHub Actions CI/CD pipeline for continuous validation
+- ✅ Production-ready code quality with proper error handling and logging
+
+📚 **Enhanced Documentation & User Experience**
+- ✅ Updated README with complete feature documentation and usage examples
+- ✅ Detailed troubleshooting guides and debug logging configurations
+- ✅ HACS installation instructions and GitHub submission preparation
+- ✅ Clear setup guides for both manual and HACS installation methods
+
+## Previous Releases
+
+### v0.9 - Advanced Audio Streaming & Quality Control
+
+🎵 **Advanced Audio Streaming**
+- ✅ Comprehensive audio configuration with quality presets (Low, Medium, High, Lossless)
+- ✅ Multi-codec support (SBC, AAC, aptX, LDAC) with automatic device capability detection
+- ✅ Configurable sample rates (44.1kHz, 48kHz, 96kHz, 192kHz) and bit depths (16/24/32-bit)
+- ✅ Dynamic audio quality adjustment during playback
+- ✅ GStreamer integration for professional audio processing
+
+🔧 **Enhanced Error Handling & Diagnostics**
+- ✅ Exponential backoff retry mechanisms for robust connection handling
+- ✅ Comprehensive audio diagnostics and troubleshooting tools
+- ✅ Structured error reporting with detailed context and recovery suggestions
+- ✅ Real-time audio pipeline monitoring and health checks
 
 🔌 **Enhanced Device Management**
 - ✅ Automatic Bluetooth disconnection when speaker is removed from Home Assistant
@@ -17,11 +60,22 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
 - ✅ Proper cleanup when integration is unloaded or entities are removed
 - ✅ Enhanced device lifecycle management with automatic resource cleanup
 
+📡 **AirPlay Discovery & Network Integration**
+- ✅ Automatic discovery of AirPlay receivers on the local network
+- ✅ Real-time monitoring of AirPlay device availability and capabilities
+- ✅ Support for both AirPlay 1 and AirPlay 2 device detection
+- ✅ Network service management with start/stop/refresh discovery controls
+- ✅ Comprehensive device information including model, features, and audio capabilities
+
 ## Features
 
 - **3-Step Configuration Wizard**: Easy setup with guided discovery, pairing, and configuration
+- **Advanced Audio Configuration**: Quality presets, codec selection, and custom audio settings
+- **Multi-Codec Support**: SBC, AAC, aptX, and LDAC with automatic device capability detection
+- **Audio Diagnostics**: Comprehensive troubleshooting tools and system health checks
 - **Automatic Reconnection**: Automatically reconnects when Bluetooth devices are powered back on
 - **AirPlay 1 & 2 Support**: Choose between AirPlay versions based on your needs
+- **AirPlay Network Discovery**: Automatic discovery and monitoring of AirPlay receivers on your network
 - **Native Bluetooth Integration**: Uses Home Assistant's built-in Bluetooth functionality
 - **HACS Compatible**: Easy installation through Home Assistant Community Store
 
@@ -100,24 +154,121 @@ Once configured, the integration will:
 
 - Create a media player entity for controlling the bridge
 - Automatically connect to the Bluetooth device when available
-- Provide AirPlay streaming capabilities
+- Provide AirPlay streaming capabilities with configurable audio quality
 - Reconnect automatically when the device is powered back on
+- Monitor audio pipeline health and provide diagnostics
+
+### Audio Configuration
+
+The integration provides comprehensive audio configuration options:
+
+#### Quality Presets
+- **Low**: SBC codec, 128 kbps, optimized for compatibility
+- **Medium**: SBC codec, 256 kbps, balanced quality and compatibility
+- **High**: AAC codec, 320 kbps, high-quality audio
+- **Lossless**: LDAC codec, 990 kbps, maximum quality (device dependent)
+
+#### Custom Settings
+- **Codec Selection**: SBC, AAC, aptX, LDAC (based on device capabilities)
+- **Sample Rates**: 44.1kHz, 48kHz, 96kHz, 192kHz
+- **Bit Depths**: 16-bit, 24-bit, 32-bit
+- **Bitrate**: Custom bitrate configuration
+- **Channels**: Mono or stereo output
+
+### AirPlay Discovery
+
+The integration includes comprehensive AirPlay network discovery capabilities:
+
+#### Automatic Discovery
+- **Real-time Detection**: Continuously monitors your network for AirPlay receivers
+- **Device Information**: Automatically detects device names, models, and capabilities
+- **AirPlay Version Support**: Identifies both AirPlay 1 and AirPlay 2 devices
+- **Audio Capabilities**: Detects supported audio formats and features
+
+#### Device Monitoring
+- **Availability Tracking**: Real-time monitoring of device online/offline status
+- **Service Information**: Detailed service information including ports and protocols
+- **Network Changes**: Automatic detection when devices join or leave the network
+- **Connection Status**: Monitor which devices are currently available for streaming
+
+#### Discovery Management
+- **Manual Control**: Start and stop discovery as needed to conserve resources
+- **Refresh Capability**: Force refresh of device list to detect new devices
+- **Filtered Results**: Option to filter by device type (AirPlay 1 vs AirPlay 2)
+- **Callback Integration**: Real-time notifications when devices are discovered or lost
+
+### Audio Diagnostics
+
+The integration includes comprehensive diagnostic tools:
+
+- **System Requirements Check**: Python version, dependencies
+- **Bluetooth Stack Validation**: bluetoothctl availability and version
+- **Audio Stack Verification**: GStreamer installation and capabilities
+- **Device Compatibility**: Supported codecs and audio formats
+- **Connection Testing**: Bluetooth pairing and audio pipeline validation
+- **Performance Monitoring**: Latency measurement and resource usage
 
 ### Services
 
 The integration provides these services:
 
+#### Bridge Control
 - `bluetooth_to_airplay_bridge.start_bridge`: Start the AirPlay bridge
 - `bluetooth_to_airplay_bridge.stop_bridge`: Stop the AirPlay bridge  
 - `bluetooth_to_airplay_bridge.reconnect`: Force reconnection to Bluetooth device
+- `bluetooth_to_airplay_bridge.set_audio_quality`: Change audio quality preset
+- `bluetooth_to_airplay_bridge.run_diagnostics`: Run comprehensive audio diagnostics
+
+#### AirPlay Discovery
+- `bluetooth_to_airplay_bridge.start_airplay_discovery`: Start AirPlay device discovery
+- `bluetooth_to_airplay_bridge.stop_airplay_discovery`: Stop AirPlay device discovery
+- `bluetooth_to_airplay_bridge.refresh_airplay_discovery`: Refresh the list of discovered AirPlay devices
+- `bluetooth_to_airplay_bridge.get_airplay_receivers`: Get list of discovered AirPlay receivers with optional filtering
+
+#### Service Examples
+
+**Start AirPlay Discovery:**
+```yaml
+service: bluetooth_to_airplay_bridge.start_airplay_discovery
+target:
+  entity_id: media_player.your_bridge_name
+```
+
+**Get AirPlay Receivers (filtered):**
+```yaml
+service: bluetooth_to_airplay_bridge.get_airplay_receivers
+target:
+  entity_id: media_player.your_bridge_name
+data:
+  receiver_type: "airplay2"  # Optional: "airplay1", "airplay2", or "all"
+```
 
 ## Requirements
 
 - Home Assistant 2023.1.0 or later
 - Bluetooth adapter on the Home Assistant host
 - `bluetoothctl` command available (usually part of BlueZ package)
+- GStreamer 1.14+ with Python bindings (for advanced audio processing)
+- PyGObject for GStreamer integration (optional, enables enhanced audio features)
 
 ## Troubleshooting
+
+### Audio Diagnostics
+
+Run comprehensive diagnostics using the service:
+
+```yaml
+service: bluetooth_to_airplay_bridge.run_diagnostics
+target:
+  entity_id: media_player.your_bridge_name
+```
+
+This will check:
+- System requirements and dependencies
+- Bluetooth stack availability
+- GStreamer installation and capabilities
+- Device codec support
+- Audio pipeline functionality
 
 ### Enable Debug Logging
 
@@ -128,6 +279,11 @@ logger:
   default: info
   logs:
     custom_components.bluetooth_to_airplay_bridge: debug
+    custom_components.bluetooth_to_airplay_bridge.audio_config: debug
+    custom_components.bluetooth_to_airplay_bridge.audio_diagnostics: debug
+    custom_components.bluetooth_to_airplay_bridge.error_handler: debug
+    custom_components.bluetooth_to_airplay_bridge.airplay_discovery: debug
+    custom_components.bluetooth_to_airplay_bridge.device_manager: debug
 ```
 
 ### Common Issues
@@ -148,6 +304,26 @@ logger:
 5. **Pairing failed**: Try resetting the Bluetooth device and clearing any existing pairings
 
 6. **Connection drops**: Check Bluetooth signal strength and interference
+
+7. **Audio quality issues**:
+   - **Solution**: Use the audio diagnostics service to check codec support
+   - **Try**: Different quality presets (Low/Medium/High/Lossless)
+   - **Check**: Device codec capabilities and GStreamer installation
+
+8. **No audio output**:
+   - **Solution**: Verify GStreamer installation and audio pipeline
+   - **Check**: Audio device permissions and ALSA/PulseAudio configuration
+   - **Run**: Audio diagnostics to identify pipeline issues
+
+9. **High latency or audio dropouts**:
+   - **Solution**: Lower audio quality preset or adjust buffer settings
+   - **Check**: System resources and network performance
+   - **Try**: Different codecs (SBC for compatibility, AAC for quality)
+
+10. **Codec not supported**:
+    - **Solution**: Check device capabilities using diagnostics
+    - **Fallback**: Use SBC codec for maximum compatibility
+    - **Upgrade**: Device firmware if available
 
 ### Debug Commands
 

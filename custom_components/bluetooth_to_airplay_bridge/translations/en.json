@@ -48,11 +48,26 @@
     "step": {
       "init": {
         "title": "Configure Bluetooth to AirPlay Bridge",
+        "description": "Update settings for {device_name} ({device_address})",
         "data": {
           "airplay_name": "AirPlay Server Name",
-          "airplay_version": "AirPlay Version"
+          "airplay_version": "AirPlay Version",
+          "audio_quality": "Audio Quality",
+          "auto_reconnect": "Auto Reconnect",
+          "connection_timeout": "Connection Timeout (seconds)"
+        },
+        "data_description": {
+          "airplay_name": "Name that will appear in AirPlay device lists",
+          "airplay_version": "AirPlay protocol version to use",
+          "audio_quality": "Audio quality preset for streaming",
+          "auto_reconnect": "Automatically reconnect when device becomes available",
+          "connection_timeout": "Timeout for Bluetooth connection attempts"
         }
       }
+    },
+    "error": {
+      "name_required": "AirPlay name is required",
+      "name_too_long": "AirPlay name must be 50 characters or less"
     }
   }
 }

@@ -34,6 +34,19 @@ SERVICE_START_BRIDGE: Final = "start_bridge"
 SERVICE_STOP_BRIDGE: Final = "stop_bridge"
 SERVICE_RECONNECT: Final = "reconnect"
 SERVICE_DISCONNECT_BLUETOOTH: Final = "disconnect_bluetooth"
+SERVICE_SCAN_DEVICES: Final = "scan_devices"
+SERVICE_CONNECT_DEVICE: Final = "connect_device"
+SERVICE_DISCONNECT_DEVICE: Final = "disconnect_device"
+SERVICE_PAIR_DEVICE: Final = "pair_device"
+SERVICE_UNPAIR_DEVICE: Final = "unpair_device"
+SERVICE_SWITCH_DEVICE: Final = "switch_device"
+SERVICE_REFRESH_DEVICES: Final = "refresh_devices"
+
+# AirPlay discovery services
+SERVICE_START_AIRPLAY_DISCOVERY: Final = "start_airplay_discovery"
+SERVICE_STOP_AIRPLAY_DISCOVERY: Final = "stop_airplay_discovery"
+SERVICE_REFRESH_AIRPLAY_DISCOVERY: Final = "refresh_airplay_discovery"
+SERVICE_GET_AIRPLAY_RECEIVERS: Final = "get_airplay_receivers"
 
 # Attributes
 ATTR_BLUETOOTH_ADDRESS: Final = "bluetooth_address"

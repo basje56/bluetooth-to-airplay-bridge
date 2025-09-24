@@ -1,0 +1,111 @@
+scan_devices:
+  name: Scan for Bluetooth Devices
+  description: Scan for available Bluetooth devices
+  fields:
+    duration:
+      name: Scan Duration
+      description: How long to scan for devices (seconds)
+      default: 10
+      example: 10
+      selector:
+        number:
+          min: 5
+          max: 60
+          unit_of_measurement: seconds
+
+connect_device:
+  name: Connect to Bluetooth Device
+  description: Connect to a specific Bluetooth device
+  fields:
+    device_address:
+      name: Device Address
+      description: MAC address of the Bluetooth device
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+
+disconnect_device:
+  name: Disconnect Bluetooth Device
+  description: Disconnect from a specific Bluetooth device
+  fields:
+    device_address:
+      name: Device Address
+      description: MAC address of the Bluetooth device
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+
+pair_device:
+  name: Pair with Bluetooth Device
+  description: Pair with a specific Bluetooth device
+  fields:
+    device_address:
+      name: Device Address
+      description: MAC address of the Bluetooth device
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+
+unpair_device:
+  name: Unpair Bluetooth Device
+  description: Unpair from a specific Bluetooth device
+  fields:
+    device_address:
+      name: Device Address
+      description: MAC address of the Bluetooth device
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+
+switch_device:
+  name: Switch Active Device
+  description: Switch to a different paired Bluetooth device
+  fields:
+    device_address:
+      name: Device Address
+      description: MAC address of the Bluetooth device to switch to
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:
+
+refresh_devices:
+  name: Refresh Bluetooth Devices
+  description: Refresh the list of available Bluetooth devices and update their status
+  fields: {}
+
+# AirPlay Discovery Services
+start_airplay_discovery:
+  name: Start AirPlay Discovery
+  description: Start discovering AirPlay receivers on the local network
+  fields: {}
+
+stop_airplay_discovery:
+  name: Stop AirPlay Discovery
+  description: Stop AirPlay receiver discovery
+  fields: {}
+
+refresh_airplay_discovery:
+  name: Refresh AirPlay Discovery
+  description: Refresh AirPlay receiver discovery by restarting the scan
+  fields: {}
+
+get_airplay_receivers:
+  name: Get AirPlay Receivers
+  description: Get list of discovered AirPlay receivers
+  fields:
+    receiver_type:
+      name: Receiver Type
+      description: Filter by receiver type (all, airplay2, audio_capable)
+      required: false
+      default: "all"
+      selector:
+        select:
+          options:
+            - "all"
+            - "airplay2"
+            - "audio_capable"
