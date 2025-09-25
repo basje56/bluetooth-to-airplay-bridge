@@ -410,12 +410,9 @@ class AudioDiagnostics:
         start_time = time.time()
         
         try:
-            # Test audio latency with a simple pipeline
+            # Test audio latency with PulseAudio
             result = await asyncio.create_subprocess_exec(
-                "gst-launch-1.0", "--quiet", 
-                "audiotestsrc", "num-buffers=10", "!", 
-                "audioconvert", "!", 
-                "fakesink",
+                "pactl", "info",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
@@ -425,9 +422,9 @@ class AudioDiagnostics:
             test_duration = (time.time() - test_start) * 1000
             
             if result.returncode == 0:
-                if test_duration < 1000:  # Less than 1 second
+                if test_duration < 500:  # Less than 500ms
                     status = "pass"
-                    message = f"Audio pipeline test completed in {test_duration:.1f}ms"
+                    message = f"PulseAudio latency test completed in {test_duration:.1f}ms"
                 else:
                     status = "warning"
                     message = f"Audio pipeline test slow: {test_duration:.1f}ms"
@@ -628,13 +625,9 @@ class AudioDiagnostics:
         start_time = time.time()
         
         try:
-            # Create test pipeline
+            # Test audio pipeline with PulseAudio
             pipeline_cmd = [
-                "gst-launch-1.0", "--quiet",
-                "audiotestsrc", "num-buffers=100", "freq=440", "!",
-                "audioconvert", "!",
-                f"audio/x-raw,rate=44100,channels=2", "!",
-                "fakesink"
+                "pactl", "list", "sinks", "short"
             ]
             
             result = await asyncio.create_subprocess_exec(

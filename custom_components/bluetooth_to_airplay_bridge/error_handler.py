@@ -271,7 +271,7 @@ class ErrorHandler:
                 return ErrorType.BLUETOOTH_ERROR, ErrorCode.BT_AUDIO_NOT_AVAILABLE
                 
         # Audio errors
-        if any(keyword in exc_str for keyword in ["gstreamer", "pulse", "alsa", "audio"]):
+        if any(keyword in exc_str for keyword in ["pulse", "alsa", "audio", "aiohttp", "aiofiles"]):
             if "codec" in exc_str:
                 return ErrorType.AUDIO_ERROR, ErrorCode.AUDIO_CODEC_UNSUPPORTED
             if "pipeline" in exc_str:
@@ -311,9 +311,9 @@ class ErrorHandler:
                 "Check device compatibility with A2DP profile"
             ],
             ErrorCode.AUDIO_CAPTURE_FAILED: [
-                "Install GStreamer: sudo apt install gstreamer1.0-*",
                 "Check PulseAudio is running: pulseaudio --check",
-                "Verify audio permissions for user"
+                "Verify audio permissions for user",
+                "Ensure aiohttp and aiofiles are installed for async audio processing"
             ],
             ErrorCode.AIRPLAY_SERVER_START_FAILED: [
                 "Install shairport-sync: sudo apt install shairport-sync",

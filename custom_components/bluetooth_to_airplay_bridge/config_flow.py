@@ -40,7 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.info("Bluetooth to AirPlay Bridge config flow module loaded successfully")
 
 
-class ConfigFlow(config_entries.ConfigFlow):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Bluetooth to AirPlay Bridge."""
 
     VERSION = 1
@@ -270,7 +270,30 @@ class ConfigFlow(config_entries.ConfigFlow):
         """Scan for Bluetooth devices."""
         _LOGGER.debug("Starting Bluetooth device scan")
         
+        devices = []
+        
         try:
+            # First try to use Home Assistant's Bluetooth component if available
+            if BLUETOOTH_AVAILABLE and bluetooth:
+                try:
+                    # Get discovered devices from HA's Bluetooth component
+                    discovered_devices = bluetooth.async_discovered_devices(self.hass)
+                    for device in discovered_devices:
+                        if hasattr(device, 'address') and hasattr(device, 'name'):
+                            devices.append({
+                                "address": device.address,
+                                "name": device.name or f"Unknown Device ({device.address})",
+                            })
+                    
+                    if devices:
+                        _LOGGER.debug("Found %d devices via HA Bluetooth component", len(devices))
+                        return devices
+                except Exception as err:
+                    _LOGGER.warning("Failed to use HA Bluetooth component: %s", err)
+            
+            # Fallback to bluetoothctl command-line tool
+            _LOGGER.debug("Falling back to bluetoothctl for device scanning")
+            
             # Use bluetoothctl to scan for devices
             scan_process = await asyncio.create_subprocess_exec(
                 "bluetoothctl",
@@ -281,7 +304,7 @@ class ConfigFlow(config_entries.ConfigFlow):
             )
             
             # Wait a bit for scanning to start
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
             
             # Stop scanning
             await asyncio.create_subprocess_exec(
@@ -299,10 +322,9 @@ class ConfigFlow(config_entries.ConfigFlow):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, _ = await devices_process.communicate()
+            stdout, stderr = await devices_process.communicate()
             
-            devices = []
-            if devices_process.returncode == 0:
+            if devices_process.returncode == 0 and stdout:
                 lines = stdout.decode().strip().split('\n')
                 for line in lines:
                     if line.startswith('Device '):
@@ -310,12 +332,16 @@ class ConfigFlow(config_entries.ConfigFlow):
                         if len(parts) >= 3:
                             address = parts[1]
                             name = parts[2] if len(parts) > 2 else f"Unknown Device ({address})"
-                            devices.append({
-                                "address": address,
-                                "name": name,
-                            })
+                            # Filter out devices that are clearly not audio devices
+                            if any(keyword in name.lower() for keyword in ['speaker', 'headphone', 'audio', 'sound', 'music', 'beats', 'sony', 'bose', 'jbl']):
+                                devices.append({
+                                    "address": address,
+                                    "name": name,
+                                })
+            else:
+                _LOGGER.warning("bluetoothctl command failed: %s", stderr.decode() if stderr else "Unknown error")
             
-            _LOGGER.debug("Found %d devices", len(devices))
+            _LOGGER.debug("Found %d devices via bluetoothctl", len(devices))
             return devices
             
         except Exception as err:

@@ -328,16 +328,6 @@ class AudioConfigManager:
             "dynamic_range_compression": self._current_settings.dynamic_range_compression
         }
         
-    def get_gstreamer_caps(self) -> str:
-        """Get GStreamer capabilities string for current settings."""
-        settings = self._current_settings
-        
-        caps = f"audio/x-raw,format=S{settings.bit_depth.value}LE," \
-               f"rate={settings.sample_rate.value}," \
-               f"channels={settings.channels}"
-               
-        return caps
-        
     def get_pulseaudio_format(self) -> str:
         """Get PulseAudio format string for current settings."""
         settings = self._current_settings
