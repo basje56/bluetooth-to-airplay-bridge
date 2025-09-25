@@ -301,6 +301,17 @@ data:
 - `bluetoothctl` command available (usually part of BlueZ package)
 - Audio system support (PulseAudio preferred, ALSA with graceful fallback)
 
+### HAOS Audio Integration
+
+For **Home Assistant Operating System (HAOS)** users, the integration automatically detects and uses the `hassio_audio` container for PulseAudio operations. No additional configuration is required.
+
+**Supported HAOS Audio Methods:**
+- 🐳 **Container Access**: `docker exec -i hassio_audio pactl <command>`
+- 🏠 **Home Assistant CLI**: `ha audio <command>` for volume control and device management
+- 🔄 **Automatic Fallback**: Graceful degradation if audio tools are unavailable
+
+For detailed information about HAOS audio integration, see [HAOS_AUDIO_INTEGRATION.md](HAOS_AUDIO_INTEGRATION.md).
+
 ### Dependencies (Automatically Installed)
 
 The integration automatically installs these Python dependencies:
@@ -378,6 +389,7 @@ logger:
    - **Solution**: Update to v0.14.1 for improved HAOS compatibility
    - **Cause**: Missing `pactl` or audio system tools in some environments
    - **Status**: Graceful fallback mechanisms implemented
+   - **HAOS Users**: See [HAOS_AUDIO_INTEGRATION.md](HAOS_AUDIO_INTEGRATION.md) for detailed troubleshooting
 
 6. **Bluetooth not available**: Ensure your Home Assistant host has a working Bluetooth adapter
 

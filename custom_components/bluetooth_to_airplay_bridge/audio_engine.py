@@ -37,12 +37,17 @@ class AudioEngine:
         self._stream_task: Optional[asyncio.Task] = None
         self._temp_audio_file: Optional[str] = None
         self._session: Optional[aiohttp.ClientSession] = None
+        self._pactl_method: Optional[str] = None  # Will be set by _check_pactl_available
         
         _LOGGER.info("Audio engine initialized with async libraries (no GStreamer dependency)")
             
     async def start_audio_capture(self) -> bool:
         """Start capturing audio from Bluetooth device using PulseAudio."""
         try:
+            # Initialize pactl method detection if not already done
+            if self._pactl_method is None:
+                await self._check_pactl_available()
+            
             # Check if Bluetooth audio source is available
             if not await self.check_bluetooth_audio_available():
                 _LOGGER.error("Bluetooth audio source not available")
@@ -235,8 +240,95 @@ class AudioEngine:
             'engine_type': 'async_pulseaudio'
         }
     
+    async def _detect_ha_environment(self) -> str:
+        """Detect the Home Assistant environment type."""
+        try:
+            # Check for HAOS by looking for hassio_audio container
+            process = await asyncio.create_subprocess_exec(
+                "docker", "ps", "--filter", "name=hassio_audio", "--format", "{{.Names}}",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0 and "hassio_audio" in stdout.decode():
+                _LOGGER.debug("Detected HAOS environment with hassio_audio container")
+                return "haos"
+                
+        except Exception as err:
+            _LOGGER.debug("Error checking for HAOS environment: %s", err)
+        
+        try:
+            # Check for Home Assistant CLI
+            process = await asyncio.create_subprocess_exec(
+                "ha", "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                _LOGGER.debug("Detected Home Assistant CLI available")
+                return "supervised"
+                
+        except Exception as err:
+            _LOGGER.debug("Error checking for HA CLI: %s", err)
+        
+        # Check if we're running inside a Home Assistant container
+        try:
+            with open("/proc/1/cgroup", "r") as f:
+                cgroup_content = f.read()
+                if "homeassistant" in cgroup_content or "hassio" in cgroup_content:
+                    _LOGGER.debug("Detected running inside Home Assistant container")
+                    return "container"
+        except Exception as err:
+            _LOGGER.debug("Error checking container environment: %s", err)
+        
+        _LOGGER.debug("Detected standalone/development environment")
+        return "standalone"
+    
     async def _check_pactl_available(self) -> bool:
         """Check if pactl command is available and working."""
+        # Detect environment first to optimize detection order
+        environment = await self._detect_ha_environment()
+        _LOGGER.debug("Detected environment: %s", environment)
+        
+        # Try methods in order of likelihood based on environment
+        if environment == "haos":
+            # HAOS: Try container method first, then HA CLI
+            if await self._try_haos_container_pactl():
+                return True
+            if await self._try_ha_cli_audio():
+                return True
+        elif environment == "supervised":
+            # Supervised: Try HA CLI first, then container, then direct
+            if await self._try_ha_cli_audio():
+                return True
+            if await self._try_haos_container_pactl():
+                return True
+            if await self._try_direct_pactl():
+                return True
+        elif environment == "container":
+            # Container: Try direct first (might be available), then HA CLI
+            if await self._try_direct_pactl():
+                return True
+            if await self._try_ha_cli_audio():
+                return True
+        else:
+            # Standalone: Try direct first, then others as fallback
+            if await self._try_direct_pactl():
+                return True
+            if await self._try_haos_container_pactl():
+                return True
+            if await self._try_ha_cli_audio():
+                return True
+        
+        _LOGGER.error("PulseAudio not available - no working pactl method found in %s environment", environment)
+        self._pactl_method = None
+        return False
+    
+    async def _try_direct_pactl(self) -> bool:
+        """Try direct pactl command."""
         try:
             process = await asyncio.create_subprocess_exec(
                 "pactl", "--version",
@@ -247,18 +339,59 @@ class AudioEngine:
             
             if process.returncode == 0:
                 version_info = stdout.decode().strip()
-                _LOGGER.debug("PulseAudio pactl available: %s", version_info)
+                _LOGGER.debug("PulseAudio pactl available directly: %s", version_info)
+                self._pactl_method = "direct"
+                return True
+        except FileNotFoundError:
+            _LOGGER.debug("Direct pactl command not found")
+        except Exception as err:
+            _LOGGER.debug("Error checking direct pactl: %s", err)
+        return False
+    
+    async def _try_haos_container_pactl(self) -> bool:
+        """Try HAOS hassio_audio container pactl."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "docker", "exec", "-i", "hassio_audio", "pactl", "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                version_info = stdout.decode().strip()
+                _LOGGER.debug("PulseAudio pactl available via HAOS container: %s", version_info)
+                self._pactl_method = "haos_container"
                 return True
             else:
-                _LOGGER.warning("pactl command failed: %s", stderr.decode())
-                return False
-                
+                _LOGGER.debug("HAOS container pactl failed: %s", stderr.decode())
         except FileNotFoundError:
-            _LOGGER.error("pactl command not found - PulseAudio not installed")
-            return False
+            _LOGGER.debug("Docker command not found")
         except Exception as err:
-            _LOGGER.error("Error checking pactl availability: %s", err)
-            return False
+            _LOGGER.debug("Error checking HAOS container pactl: %s", err)
+        return False
+    
+    async def _try_ha_cli_audio(self) -> bool:
+        """Try Home Assistant CLI audio."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "ha", "audio", "info",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                _LOGGER.debug("Home Assistant CLI audio available")
+                self._pactl_method = "ha_cli"
+                return True
+            else:
+                _LOGGER.debug("HA CLI audio failed: %s", stderr.decode())
+        except FileNotFoundError:
+            _LOGGER.debug("HA CLI command not found")
+        except Exception as err:
+            _LOGGER.debug("Error checking HA CLI: %s", err)
+        return False
     
     async def _get_bluetooth_source_name(self) -> str:
         """Get the PulseAudio source name for the Bluetooth device."""
@@ -267,12 +400,25 @@ class AudioEngine:
         return f"bluez_source.{mac_formatted}.a2dp_source"
     
     async def _execute_pactl_command(self, args: list[str]) -> tuple[bool, str, str]:
-        """Execute a pactl command and return success status, stdout, stderr."""
+        """Execute a pactl command using the appropriate method for the environment."""
+        if not hasattr(self, '_pactl_method') or self._pactl_method is None:
+            _LOGGER.error("No pactl method available")
+            return False, "", "No pactl method available"
+        
         try:
-            if not await self._check_pactl_available():
-                return False, "", "pactl not available"
+            if self._pactl_method == "direct":
+                # Direct pactl execution
+                cmd = ["pactl"] + args
+            elif self._pactl_method == "haos_container":
+                # Execute via HAOS hassio_audio container
+                cmd = ["docker", "exec", "-i", "hassio_audio", "pactl"] + args
+            elif self._pactl_method == "ha_cli":
+                # For HA CLI, we need to map pactl commands to HA CLI equivalents
+                return await self._execute_ha_cli_command(args)
+            else:
+                _LOGGER.error("Unknown pactl method: %s", self._pactl_method)
+                return False, "", "Unknown pactl method"
             
-            cmd = ["pactl"] + args
             _LOGGER.debug("Executing pactl command: %s", " ".join(cmd))
             
             process = await asyncio.create_subprocess_exec(
@@ -286,13 +432,107 @@ class AudioEngine:
             stdout_str = stdout.decode().strip()
             stderr_str = stderr.decode().strip()
             
-            if not success:
-                _LOGGER.warning("pactl command failed: %s", stderr_str)
+            if success:
+                _LOGGER.debug("pactl command succeeded: %s", stdout_str[:200])
+            else:
+                _LOGGER.warning("pactl command failed (exit %d): %s", process.returncode, stderr_str)
             
             return success, stdout_str, stderr_str
             
         except Exception as err:
-            _LOGGER.error("Error executing pactl command: %s", err)
+            _LOGGER.error("Error executing pactl command %s: %s", args, err)
+            return False, "", str(err)
+    
+    async def _execute_ha_cli_command(self, pactl_args: list[str]) -> tuple[bool, str, str]:
+        """Execute Home Assistant CLI commands as pactl equivalents."""
+        try:
+            # Map common pactl commands to HA CLI equivalents
+            if pactl_args == ["--version"]:
+                cmd = ["ha", "audio", "info"]
+            elif pactl_args == ["list", "sources", "short"]:
+                cmd = ["ha", "audio", "info"]
+            elif pactl_args == ["list", "sources"]:
+                cmd = ["ha", "audio", "info"]
+            elif pactl_args[0] == "set-source-volume" and len(pactl_args) >= 3:
+                # Extract source name and volume from pactl args
+                source_name = pactl_args[1]
+                volume = pactl_args[2]
+                # Try to use HA CLI volume control
+                cmd = ["ha", "audio", "volume", "--source", source_name, "--volume", volume]
+            elif pactl_args == ["list", "sinks", "short"]:
+                cmd = ["ha", "audio", "info"]
+            elif pactl_args == ["list", "sinks"]:
+                cmd = ["ha", "audio", "info"]
+            else:
+                _LOGGER.warning("Unsupported HA CLI mapping for pactl args: %s", pactl_args)
+                # For unsupported commands, try to fall back to container method if possible
+                if await self._try_container_fallback():
+                    return await self._execute_container_pactl(pactl_args)
+                return False, "", "Unsupported HA CLI command"
+            
+            _LOGGER.debug("Executing HA CLI command: %s", " ".join(cmd))
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            success = process.returncode == 0
+            stdout_str = stdout.decode().strip()
+            stderr_str = stderr.decode().strip()
+            
+            if success:
+                _LOGGER.debug("HA CLI command succeeded: %s", stdout_str[:200])
+            else:
+                _LOGGER.warning("HA CLI command failed (exit %d): %s", process.returncode, stderr_str)
+            
+            return success, stdout_str, stderr_str
+            
+        except Exception as err:
+            _LOGGER.error("Error executing HA CLI command: %s", err)
+            return False, "", str(err)
+    
+    async def _try_container_fallback(self) -> bool:
+        """Try to detect if container method is available as fallback."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "docker", "exec", "-i", "hassio_audio", "pactl", "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            return process.returncode == 0
+        except Exception:
+            return False
+    
+    async def _execute_container_pactl(self, args: list[str]) -> tuple[bool, str, str]:
+        """Execute pactl command directly in the hassio_audio container."""
+        try:
+            cmd = ["docker", "exec", "-i", "hassio_audio", "pactl"] + args
+            _LOGGER.debug("Executing container pactl command: %s", " ".join(cmd))
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            success = process.returncode == 0
+            stdout_str = stdout.decode().strip()
+            stderr_str = stderr.decode().strip()
+            
+            if success:
+                _LOGGER.debug("Container pactl command succeeded: %s", stdout_str[:200])
+            else:
+                _LOGGER.warning("Container pactl command failed (exit %d): %s", process.returncode, stderr_str)
+            
+            return success, stdout_str, stderr_str
+            
+        except Exception as err:
+            _LOGGER.error("Error executing container pactl command: %s", err)
             return False, "", str(err)
     
     async def check_bluetooth_audio_available(self) -> bool:
