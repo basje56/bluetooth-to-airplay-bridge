@@ -10,7 +10,10 @@ Version 0.12.0 focuses on dependency optimization and installation performance i
 ## ✨ What's New
 
 ### 🔧 Dependency Optimization
-- **Removed unused `pycairo` dependency** - Comprehensive codebase analysis confirmed no actual usage
+- **Removed unused dependencies** - Comprehensive codebase analysis confirmed several dependencies were not actually used:
+  - `pycairo` - Not used anywhere in the code
+  - `cryptography` - Only static string references, no actual cryptographic operations
+  - `pydbus` - Code uses `dbus-send` command line tool instead
 - **Streamlined installation process** - Reduced dependency count for faster HACS installation
 - **Improved resource efficiency** - Lower memory footprint and reduced installation complexity
 - **Enhanced compatibility** - Better support across different Home Assistant environments
@@ -19,8 +22,6 @@ Version 0.12.0 focuses on dependency optimization and installation performance i
 The integration now uses only essential dependencies:
 - `pygobject>=3.42.0` - GStreamer integration for audio processing
 - `zeroconf>=0.47.0` - AirPlay device discovery via mDNS
-- `cryptography>=3.4.8` - Security and encryption operations
-- `pydbus>=0.6.0` - D-Bus communication with Bluetooth stack
 
 ### 🏠 Home Assistant Compatibility
 - **Updated minimum requirement** to Home Assistant 2024.1.0
