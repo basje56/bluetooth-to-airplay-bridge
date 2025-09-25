@@ -5,26 +5,49 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v0.12.1** - Advanced Dependency Optimization
+**Latest Release: v0.14.1** - Home Assistant 2025.x Compatibility & Enhanced Stability
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol with advanced audio configuration and quality control.
 
-## What's New in v0.12.1
+## What's New in v0.14.1
 
-🚀 **Advanced Dependency Optimization**
-- ✅ Removed additional unused dependencies: `cryptography` and `pydbus`
-- ✅ Comprehensive codebase analysis revealed only static string references, no actual usage
-- ✅ Reduced dependency count from 4 to 2 essential libraries only
-- ✅ Significantly improved installation speed and reduced resource footprint
-- ✅ Enhanced system compatibility with fewer potential dependency conflicts
+🔧 **Home Assistant 2025.x Compatibility Fixes**
+- ✅ Fixed `AttributeError: '_process'` errors in media player and metadata manager
+- ✅ Updated Bluetooth component integration for new HA API (list-based device discovery)
+- ✅ Enhanced `pactl` dependency handling with graceful fallback for HAOS environments
+- ✅ Improved error handling and logging throughout the integration
+- ✅ Full compatibility with Home Assistant Operating System (HAOS)
 
-🔧 **Streamlined Architecture**
-- ✅ Code uses `dbus-send` command line tool instead of `pydbus` library
-- ✅ No actual cryptographic operations requiring `cryptography` library
-- ✅ Maintained full functionality with optimized dependency management
-- ✅ Improved installation reliability across different Home Assistant environments
+🚀 **Enhanced Stability & Error Handling**
+- ✅ Robust fallback mechanisms when system audio tools are unavailable
+- ✅ Improved Bluetooth device scanning and discovery reliability
+- ✅ Better integration lifecycle management and cleanup
+- ✅ Enhanced diagnostics and troubleshooting capabilities
+- ✅ Production-ready error recovery and graceful degradation
 
 ## Previous Releases
+
+### v0.14.0 - Major Architecture Improvements & Enhanced Features
+
+🚀 **Advanced Metadata Management**
+- ✅ Complete metadata synchronization between Bluetooth and AirPlay
+- ✅ Real-time track information display (title, artist, album, artwork)
+- ✅ Enhanced media player controls with proper state management
+- ✅ Improved audio pipeline with better error recovery
+
+🔧 **Enhanced Device Management**
+- ✅ Improved Bluetooth device lifecycle management
+- ✅ Better connection state tracking and recovery
+- ✅ Enhanced device discovery and pairing reliability
+- ✅ Optimized resource usage and cleanup
+
+### v0.13.x - Stability & Performance Improvements
+
+🔧 **Enhanced Stability**
+- ✅ Improved error handling and recovery mechanisms
+- ✅ Better resource management and cleanup
+- ✅ Enhanced logging and diagnostics
+- ✅ Optimized performance for long-running operations
 
 ### v0.12 - Dependency Optimization & Enhanced Performance
 
@@ -109,9 +132,9 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
 
 ## Installation
 
-### HACS (Recommended) ✅ **Now Working!**
+### HACS (Recommended) ✅ **Fully Compatible!**
 
-#### Method 1: Add as Custom Repository (Ready for Use)
+#### Method 1: Add as Custom Repository (Current Method)
 
 1. **Open HACS** in your Home Assistant instance
 2. **Go to "Integrations"** tab
@@ -122,11 +145,11 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
    - **Category**: `Integration`
 6. **Click "Add"**
 7. **Search** for "Bluetooth to AirPlay Bridge" in HACS
-8. **Install** the integration (v0.8 or later)
+8. **Install** the integration (v0.14.1 or later recommended)
 9. **Restart** Home Assistant
 10. **Add Integration** via Settings → Devices & Services → Add Integration
 
-> **Note**: After installing v0.8, the integration will properly load and appear in your Home Assistant integration list. This version includes enhanced device management and stability improvements.
+> **Note**: Version 0.14.1 includes important compatibility fixes for Home Assistant 2025.x and enhanced stability improvements. Always use the latest version for the best experience.
 
 #### Method 2: Default HACS Store (Coming Soon)
 
@@ -273,10 +296,10 @@ data:
 
 ## Requirements
 
-- Home Assistant 2024.1.0 or later
+- Home Assistant 2024.1.0 or later (v0.14.1+ fully compatible with HA 2025.x)
 - Bluetooth adapter on the Home Assistant host
 - `bluetoothctl` command available (usually part of BlueZ package)
-- PulseAudio for audio capture and processing
+- Audio system support (PulseAudio preferred, ALSA with graceful fallback)
 
 ### Dependencies (Automatically Installed)
 
@@ -285,7 +308,14 @@ The integration automatically installs these Python dependencies:
 - `aiofiles>=23.0.0` - Asynchronous file operations
 - `zeroconf>=0.47.0` - AirPlay device discovery via mDNS
 
-**Note**: As of v0.12, the unused `pycairo`, `cryptography`, and `pydbus` dependencies have been removed for improved installation performance and reduced system requirements.
+### System Compatibility
+
+- ✅ **Home Assistant Operating System (HAOS)**: Fully supported with graceful fallbacks
+- ✅ **Home Assistant Container**: Supported with host audio system access
+- ✅ **Home Assistant Supervised**: Supported with proper audio configuration
+- ✅ **Home Assistant Core**: Supported with manual dependency management
+
+**Note**: Version 0.14.1 includes enhanced compatibility with HAOS environments, including graceful handling of missing system audio tools like `pactl`.
 
 ## Troubleshooting
 
@@ -325,38 +355,55 @@ logger:
 ### Common Issues
 
 1. **Integration not appearing in Home Assistant**:
-   - **Solution**: Ensure you're using v0.8 or later
-   - **Cause**: Previous versions had ConfigFlow domain property issues
+   - **Solution**: Ensure you're using v0.14.1 or later
+   - **Cause**: Compatibility issues with newer Home Assistant versions
    - **Verification**: Check that you can find "Bluetooth to AirPlay Bridge" in Settings → Devices & Services → Add Integration
 
 2. **HACS not showing latest version**:
    - **Solution**: Wait 15-30 minutes for HACS to detect new releases, or force refresh HACS
-   - **Note**: Use stable releases only
+   - **Alternative**: Remove and re-add the custom repository
+   - **Note**: Always use the latest stable release for best compatibility
 
-3. **Bluetooth not available**: Ensure your Home Assistant host has a working Bluetooth adapter
+3. **AttributeError: '_process' errors** (Fixed in v0.14.1):
+   - **Solution**: Update to v0.14.1 or later
+   - **Cause**: API changes in Home Assistant 2025.x
+   - **Status**: Fully resolved with enhanced error handling
 
-4. **Device not found**: Make sure the device is in pairing mode and within range
+4. **Bluetooth device discovery issues** (Improved in v0.14.1):
+   - **Solution**: Update to v0.14.1 for improved Bluetooth API compatibility
+   - **Cause**: Changes in Home Assistant's Bluetooth component API
+   - **Status**: Enhanced with better device scanning and discovery
 
-5. **Pairing failed**: Try resetting the Bluetooth device and clearing any existing pairings
+5. **Audio system compatibility issues** (Enhanced in v0.14.1):
+   - **Solution**: Update to v0.14.1 for improved HAOS compatibility
+   - **Cause**: Missing `pactl` or audio system tools in some environments
+   - **Status**: Graceful fallback mechanisms implemented
 
-6. **Connection drops**: Check Bluetooth signal strength and interference
+6. **Bluetooth not available**: Ensure your Home Assistant host has a working Bluetooth adapter
 
-7. **Audio quality issues**:
+7. **Device not found**: Make sure the device is in pairing mode and within range
+
+8. **Pairing failed**: Try resetting the Bluetooth device and clearing any existing pairings
+
+9. **Connection drops**: Check Bluetooth signal strength and interference
+
+10. **Audio quality issues**:
    - **Solution**: Use the audio diagnostics service to check codec support
    - **Try**: Different quality presets (Low/Medium/High/Lossless)
    - **Check**: Device codec capabilities and GStreamer installation
 
-8. **No audio output**:
-   - **Solution**: Verify GStreamer installation and audio pipeline
-   - **Check**: Audio device permissions and ALSA/PulseAudio configuration
-   - **Run**: Audio diagnostics to identify pipeline issues
+11. **No audio output**:
+    - **Solution**: Verify GStreamer installation and audio pipeline
+    - **Check**: Audio device permissions and ALSA/PulseAudio configuration
+    - **Run**: Audio diagnostics to identify pipeline issues
+    - **v0.14.1**: Enhanced fallback handling for missing audio tools
 
-9. **High latency or audio dropouts**:
-   - **Solution**: Lower audio quality preset or adjust buffer settings
-   - **Check**: System resources and network performance
-   - **Try**: Different codecs (SBC for compatibility, AAC for quality)
+12. **High latency or audio dropouts**:
+    - **Solution**: Lower audio quality preset or adjust buffer settings
+    - **Check**: System resources and network performance
+    - **Try**: Different codecs (SBC for compatibility, AAC for quality)
 
-10. **Codec not supported**:
+13. **Codec not supported**:
     - **Solution**: Check device capabilities using diagnostics
     - **Fallback**: Use SBC codec for maximum compatibility
     - **Upgrade**: Device firmware if available
@@ -376,9 +423,9 @@ bluetoothctl info [DEVICE_ADDRESS]
 
 ## HACS Integration
 
-### Current Status: ✅ Fully Working as Custom Repository
+### Current Status: ✅ Fully Compatible with Latest Home Assistant
 
-This integration is **fully functional in HACS** with v0.8 and can be installed immediately using the custom repository method above. All previous integration discovery issues have been resolved.
+This integration is **fully functional in HACS** with v0.14.1 and can be installed immediately using the custom repository method above. All compatibility issues with Home Assistant 2025.x have been resolved, including enhanced stability and error handling.
 
 ### Submitting to Official HACS Store
 
