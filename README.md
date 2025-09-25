@@ -5,11 +5,28 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v0.10** - Complete AirPlay Discovery & Production Ready
+**Latest Release: v0.12** - Dependency Optimization & Enhanced Performance
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol with advanced audio configuration and quality control.
 
-## What's New in v0.10
+## What's New in v0.12
+
+🚀 **Dependency Optimization & Performance Enhancement**
+- ✅ Removed unused `pycairo` dependency, reducing installation complexity
+- ✅ Streamlined dependency list for faster installation and reduced resource usage
+- ✅ Updated HACS compatibility requirements for latest Home Assistant versions
+- ✅ Enhanced performance through dependency optimization
+- ✅ Maintained full functionality while reducing system requirements
+
+🔧 **Technical Improvements**
+- ✅ Comprehensive codebase analysis confirmed no actual usage of removed dependencies
+- ✅ All existing audio processing, Bluetooth management, and AirPlay discovery features remain intact
+- ✅ Improved installation reliability across different Home Assistant environments
+- ✅ Updated minimum Home Assistant version requirement to 2024.1.0 for better compatibility
+
+## Previous Releases
+
+### v0.10 - Complete AirPlay Discovery & Production Ready
 
 🚀 **Production Ready Release**
 - ✅ Complete AirPlay Discovery implementation with full network integration
@@ -245,11 +262,21 @@ data:
 
 ## Requirements
 
-- Home Assistant 2023.1.0 or later
+- Home Assistant 2024.1.0 or later
 - Bluetooth adapter on the Home Assistant host
 - `bluetoothctl` command available (usually part of BlueZ package)
 - GStreamer 1.14+ with Python bindings (for advanced audio processing)
-- PyGObject for GStreamer integration (optional, enables enhanced audio features)
+- PyGObject for GStreamer integration (enables enhanced audio features)
+
+### Dependencies (Automatically Installed)
+
+The integration automatically installs these Python dependencies:
+- `pygobject>=3.42.0` - GStreamer integration for audio processing
+- `zeroconf>=0.47.0` - AirPlay device discovery via mDNS
+- `cryptography>=3.4.8` - Security and encryption operations
+- `pydbus>=0.6.0` - D-Bus communication with Bluetooth stack
+
+**Note**: As of v0.12, the unused `pycairo` dependency has been removed for improved installation performance and reduced system requirements.
 
 ## Troubleshooting
 
