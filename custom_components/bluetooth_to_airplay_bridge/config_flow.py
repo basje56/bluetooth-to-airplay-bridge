@@ -289,12 +289,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     scanner = async_get_scanner(self.hass)
                     if scanner:
                         discovered_devices = scanner.discovered_devices
-                        for address, device_info in discovered_devices.items():
+                        # discovered_devices is now a list of BLEDevice objects, not a dict
+                        for device in discovered_devices:
                             # Filter for audio devices
-                            device_name = getattr(device_info, 'name', None) or f"Unknown Device ({address})"
+                            device_name = device.name or f"Unknown Device ({device.address})"
                             if any(keyword in device_name.lower() for keyword in ['audio', 'speaker', 'headphone', 'earphone', 'airpods', 'beats']):
                                 devices.append({
-                                    "address": address,
+                                    "address": device.address,
                                     "name": device_name,
                                 })
                     

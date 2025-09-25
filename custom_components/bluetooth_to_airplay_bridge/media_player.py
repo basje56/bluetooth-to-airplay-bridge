@@ -188,7 +188,7 @@ class BluetoothAirPlayMediaPlayer(MediaPlayerEntity):
         # Add AirPlay server status if available
         if hasattr(self._coordinator, '_airplay_server') and self._coordinator._airplay_server:
             attributes[ATTR_AIRPLAY_SERVER_STATUS] = (
-                'running' if self._coordinator._airplay_server._process else 'stopped'
+                'running' if self._coordinator._airplay_server._server else 'stopped'
             )
         
         # Add mDNS status if available

@@ -234,10 +234,30 @@ class AudioEngine:
             'airplay_name': self._airplay_name,
             'engine_type': 'async_pulseaudio'
         }
+    
+    async def _check_pactl_available(self) -> bool:
+        """Check if pactl command is available."""
+        try:
+            result = await asyncio.create_subprocess_exec(
+                "pactl", "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await result.communicate()
+            return result.returncode == 0
+        except (FileNotFoundError, OSError):
+            return False
         
     async def check_bluetooth_audio_available(self) -> bool:
         """Check if Bluetooth audio source is available."""
         try:
+            # Check if pactl is available first
+            if not await self._check_pactl_available():
+                _LOGGER.warning("pactl not available, assuming Bluetooth audio is available")
+                # In HAOS environment without pactl, assume audio is available
+                # The actual audio capture will handle any issues
+                return True
+            
             # Check if PulseAudio source exists for this device
             cmd = ["pactl", "list", "sources", "short"]
             result = await asyncio.create_subprocess_exec(
@@ -256,11 +276,17 @@ class AudioEngine:
             
         except Exception as err:
             _LOGGER.error("Error checking Bluetooth audio availability: %s", err)
-            return False
+            # Return True as fallback to allow the integration to continue
+            return True
     
     async def get_bluetooth_volume(self) -> float:
         """Get current Bluetooth device volume (0.0-1.0)."""
         try:
+            # Check if pactl is available first
+            if not await self._check_pactl_available():
+                _LOGGER.debug("pactl not available, returning default volume")
+                return 0.5  # Default volume when pactl is not available
+            
             # Get volume from PulseAudio source
             source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
             cmd = ["pactl", "list", "sources"]
@@ -300,6 +326,11 @@ class AudioEngine:
     async def set_bluetooth_volume(self, volume: float) -> bool:
         """Set Bluetooth device volume (0.0-1.0)."""
         try:
+            # Check if pactl is available first
+            if not await self._check_pactl_available():
+                _LOGGER.debug("pactl not available, cannot set volume")
+                return False  # Cannot set volume without pactl
+            
             volume_percent = max(0, min(100, int(volume * 100)))
             source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
             
@@ -329,6 +360,11 @@ class AudioEngine:
     async def get_audio_latency(self) -> float:
         """Get estimated audio latency in milliseconds."""
         try:
+            # Check if pactl is available first
+            if not await self._check_pactl_available():
+                _LOGGER.debug("pactl not available, returning default latency")
+                return 100.0  # Default latency estimate when pactl is not available
+            
             # Use pactl to get latency information
             source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
             cmd = ["pactl", "list", "sources"]
