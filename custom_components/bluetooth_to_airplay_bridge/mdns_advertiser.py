@@ -16,16 +16,19 @@ except ImportError:
     Zeroconf = None
     AsyncZeroconf = None
 
+from homeassistant.core import HomeAssistant
+
 _LOGGER = logging.getLogger(__name__)
 
 class mDNSAdvertiser:
-    """Handles mDNS service advertisement for AirPlay discovery."""
+    """mDNS advertiser for AirPlay service."""
     
-    def __init__(self, service_name: str, port: int, version: str = "1") -> None:
-        """Initialize mDNS advertiser."""
+    def __init__(self, service_name: str, port: int, hass: HomeAssistant, version: str = "1") -> None:
+        """Initialize the mDNS advertiser."""
         self._service_name = service_name
         self._port = port
         self._version = version
+        self._hass = hass
         self._zeroconf: Optional[AsyncZeroconf] = None
         self._service_info: Optional[ServiceInfo] = None
         self._is_advertising = False
@@ -40,8 +43,10 @@ class mDNSAdvertiser:
             return False
             
         try:
-            # Create AsyncZeroconf instance
-            self._zeroconf = AsyncZeroconf()
+            # Use Home Assistant's shared Zeroconf instance
+            from homeassistant.components.zeroconf import async_get_instance
+            zeroconf_instance = await async_get_instance(self._hass)
+            self._zeroconf = AsyncZeroconf(zc=zeroconf_instance)
             
             # Get local IP address
             local_ip = self._get_local_ip()

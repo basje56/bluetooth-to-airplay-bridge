@@ -67,8 +67,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="bluetooth_not_available")
         
         # Extract device information from discovery
-        device_address = discovery_info.get("address")
-        device_name = discovery_info.get("name", "Unknown Device")
+        # Handle both dict and BluetoothServiceInfoBleak object types
+        if hasattr(discovery_info, 'address'):
+            # BluetoothServiceInfoBleak object
+            device_address = discovery_info.address
+            device_name = getattr(discovery_info, 'name', None) or f"Unknown Device ({discovery_info.address})"
+        else:
+            # Dictionary format
+            device_address = discovery_info.get("address")
+            device_name = discovery_info.get("name", "Unknown Device")
         
         if not device_address:
             return self.async_abort(reason="no_device_address")
@@ -277,16 +284,22 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if BLUETOOTH_AVAILABLE and bluetooth:
                 try:
                     # Get discovered devices from HA's Bluetooth component
-                    discovered_devices = bluetooth.async_discovered_devices(self.hass)
-                    for device in discovered_devices:
-                        if hasattr(device, 'address') and hasattr(device, 'name'):
-                            devices.append({
-                                "address": device.address,
-                                "name": device.name or f"Unknown Device ({device.address})",
-                            })
+                    # Use the correct API method for getting discovered devices
+                    from homeassistant.components.bluetooth import async_get_scanner
+                    scanner = async_get_scanner(self.hass)
+                    if scanner:
+                        discovered_devices = scanner.discovered_devices
+                        for address, device_info in discovered_devices.items():
+                            # Filter for audio devices
+                            device_name = getattr(device_info, 'name', None) or f"Unknown Device ({address})"
+                            if any(keyword in device_name.lower() for keyword in ['audio', 'speaker', 'headphone', 'earphone', 'airpods', 'beats']):
+                                devices.append({
+                                    "address": address,
+                                    "name": device_name,
+                                })
                     
                     if devices:
-                        _LOGGER.debug("Found %d devices via HA Bluetooth component", len(devices))
+                        _LOGGER.debug("Found %d audio devices via HA Bluetooth component", len(devices))
                         return devices
                 except Exception as err:
                     _LOGGER.warning("Failed to use HA Bluetooth component: %s", err)

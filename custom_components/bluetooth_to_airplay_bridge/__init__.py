@@ -287,6 +287,7 @@ class BluetoothAirPlayCoordinator:
         self._mdns_advertiser = mDNSAdvertiser(
             service_name=self._airplay_name,
             port=5000,
+            hass=hass,
             version=self._airplay_version
         )
         
