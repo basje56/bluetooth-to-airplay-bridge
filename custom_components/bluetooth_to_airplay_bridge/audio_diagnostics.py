@@ -28,7 +28,7 @@ class AudioDiagnosticResult:
 class SystemAudioInfo:
     """System audio information."""
     bluetooth_available: bool
-    gstreamer_available: bool
+    async_libraries_available: bool
     pulseaudio_available: bool
     alsa_available: bool
     bluetooth_devices: List[Dict[str, Any]]
@@ -171,26 +171,22 @@ class AudioDiagnostics:
         """Check audio stack availability."""
         start_time = time.time()
         
-        # Check GStreamer
+        # Check async libraries (aiohttp, aiofiles)
         try:
-            import gi  # type: ignore
-            gi.require_version('Gst', '1.0')  # type: ignore
-            from gi.repository import Gst  # type: ignore
+            import aiohttp
+            import aiofiles
             
-            if not Gst.is_initialized():
-                Gst.init(None)
-                
-            version = Gst.version_string()
-            self._add_result("gstreamer", "pass", f"GStreamer available: {version}", {
-                "version": version
+            self._add_result("async_libraries", "pass", "Async libraries available (aiohttp, aiofiles)", {
+                "aiohttp_version": aiohttp.__version__,
+                "aiofiles_available": True
             }, start_time)
             
-        except ImportError:
-            self._add_result("gstreamer", "fail", "GStreamer not available", {
-                "error": "gi.repository.Gst not found"
+        except ImportError as err:
+            self._add_result("async_libraries", "fail", f"Required async libraries not available: {err}", {
+                "error": str(err)
             }, start_time)
         except Exception as err:
-            self._add_result("gstreamer", "fail", f"GStreamer error: {err}", {}, start_time)
+            self._add_result("async_libraries", "fail", f"Async libraries error: {err}", {}, start_time)
             
         # Check PulseAudio
         try:
@@ -576,13 +572,13 @@ class AudioDiagnostics:
                         "solution": "Install bluez package: sudo apt-get install bluez",
                         "commands": ["sudo apt-get update", "sudo apt-get install bluez"]
                     })
-                elif result.test_name == "gstreamer":
+                elif result.test_name == "async_libraries":
                     recommendations.append({
                         "priority": "high",
                         "category": "audio",
-                        "issue": "GStreamer not available",
-                        "solution": "Install GStreamer: sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base",
-                        "commands": ["sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good"]
+                        "issue": "Required async libraries not available",
+                        "solution": "Install async libraries: pip install aiohttp aiofiles",
+                        "commands": ["pip install aiohttp>=3.8.0 aiofiles>=23.0.0"]
                     })
             elif result.status == "warning":
                 if "group" in result.test_name and "recommendation" in result.details:

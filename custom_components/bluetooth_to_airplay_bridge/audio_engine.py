@@ -1,23 +1,15 @@
-"""Audio engine for Bluetooth to AirPlay Bridge."""
+"""Audio engine for Bluetooth to AirPlay Bridge using async libraries."""
 from __future__ import annotations
 
 import asyncio
 import logging
-import subprocess
-import threading
+import os
+import signal
+import tempfile
+import time
 from typing import Any, Callable, Optional
-
-try:
-    import gi
-    gi.require_version('Gst', '1.0')
-    gi.require_version('GstAudio', '1.0')
-    from gi.repository import Gst, GstAudio, GLib
-    GST_AVAILABLE = True
-except ImportError:
-    GST_AVAILABLE = False
-    Gst = None
-    GstAudio = None
-    GLib = None
+import aiohttp
+import aiofiles
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,52 +22,69 @@ SUPPORTED_CODECS = {
 }
 
 class AudioEngine:
-    """Manages audio capture from Bluetooth and streaming to AirPlay."""
+    """Manages audio capture from Bluetooth and streaming to AirPlay using async libraries."""
     
     def __init__(self, bluetooth_address: str, airplay_name: str) -> None:
         """Initialize the audio engine."""
         self._bluetooth_address = bluetooth_address
         self._airplay_name = airplay_name
-        self._pipeline: Optional[Any] = None
-        self._loop: Optional[GLib.MainLoop] = None
-        self._thread: Optional[threading.Thread] = None
         self._is_running = False
         self._audio_callback: Optional[Callable] = None
         self._current_codec = 'sbc'
         self._sample_rate = 44100
         self._channels = 2
+        self._capture_process: Optional[asyncio.subprocess.Process] = None
+        self._stream_task: Optional[asyncio.Task] = None
+        self._temp_audio_file: Optional[str] = None
+        self._session: Optional[aiohttp.ClientSession] = None
         
-        if not GST_AVAILABLE:
-            _LOGGER.error("GStreamer not available - audio functionality will be limited")
+        _LOGGER.info("Audio engine initialized with async libraries (no GStreamer dependency)")
             
     async def start_audio_capture(self) -> bool:
-        """Start capturing audio from Bluetooth device."""
-        if not GST_AVAILABLE:
-            _LOGGER.error("Cannot start audio capture - GStreamer not available")
-            return False
-            
+        """Start capturing audio from Bluetooth device using PulseAudio."""
         try:
-            # Initialize GStreamer
-            if not Gst.is_initialized():
-                Gst.init(None)
-                
-            # Create audio pipeline
-            success = await self._create_audio_pipeline()
-            if not success:
+            # Check if Bluetooth audio source is available
+            if not await self.check_bluetooth_audio_available():
+                _LOGGER.error("Bluetooth audio source not available")
                 return False
-                
-            # Start the pipeline in a separate thread
-            self._thread = threading.Thread(target=self._run_pipeline, daemon=True)
-            self._thread.start()
             
-            # Wait a moment for pipeline to start
-            await asyncio.sleep(1)
+            # Create temporary file for audio stream
+            self._temp_audio_file = os.path.join(
+                tempfile.gettempdir(), 
+                f"airplay_audio_{self._airplay_name.replace(' ', '_')}.raw"
+            )
             
-            _LOGGER.info("Audio capture started successfully")
+            # Start audio capture using parec (PulseAudio record)
+            source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}.a2dp_source"
+            
+            cmd = [
+                "parec",
+                "--device", source_name,
+                "--format", "s16le",
+                "--rate", str(self._sample_rate),
+                "--channels", str(self._channels),
+                "--file-format", "raw",
+                self._temp_audio_file
+            ]
+            
+            _LOGGER.debug("Starting audio capture with command: %s", " ".join(cmd))
+            
+            self._capture_process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            # Start streaming task
+            self._stream_task = asyncio.create_task(self._stream_audio())
+            
+            self._is_running = True
+            _LOGGER.info("Audio capture started successfully using PulseAudio")
             return True
             
         except Exception as err:
             _LOGGER.error("Failed to start audio capture: %s", err)
+            await self._cleanup()
             return False
             
     async def stop_audio_capture(self) -> None:
@@ -83,117 +92,80 @@ class AudioEngine:
         try:
             self._is_running = False
             
-            if self._pipeline:
-                self._pipeline.set_state(Gst.State.NULL)
-                
-            if self._loop and self._loop.is_running():
-                self._loop.quit()
-                
-            if self._thread and self._thread.is_alive():
-                self._thread.join(timeout=5)
-                
+            # Cancel streaming task
+            if self._stream_task and not self._stream_task.done():
+                self._stream_task.cancel()
+                try:
+                    await self._stream_task
+                except asyncio.CancelledError:
+                    pass
+            
+            # Stop capture process
+            if self._capture_process:
+                try:
+                    self._capture_process.terminate()
+                    await asyncio.wait_for(self._capture_process.wait(), timeout=5.0)
+                except asyncio.TimeoutError:
+                    _LOGGER.warning("Audio capture process did not terminate gracefully, killing")
+                    self._capture_process.kill()
+                    await self._capture_process.wait()
+                except ProcessLookupError:
+                    pass  # Process already terminated
+            
+            await self._cleanup()
             _LOGGER.info("Audio capture stopped")
             
         except Exception as err:
             _LOGGER.error("Error stopping audio capture: %s", err)
             
-    async def _create_audio_pipeline(self) -> bool:
-        """Create GStreamer pipeline for audio capture."""
+    async def _cleanup(self) -> None:
+        """Clean up resources."""
         try:
-            # Create pipeline elements
-            pipeline_str = self._build_pipeline_string()
-            _LOGGER.debug("Creating pipeline: %s", pipeline_str)
+            # Close HTTP session
+            if self._session and not self._session.closed:
+                await self._session.close()
+                self._session = None
             
-            self._pipeline = Gst.parse_launch(pipeline_str)
-            if not self._pipeline:
-                _LOGGER.error("Failed to create GStreamer pipeline")
-                return False
+            # Remove temporary file
+            if self._temp_audio_file and os.path.exists(self._temp_audio_file):
+                try:
+                    os.unlink(self._temp_audio_file)
+                except OSError:
+                    pass
+                self._temp_audio_file = None
                 
-            # Set up message handling
-            bus = self._pipeline.get_bus()
-            bus.add_signal_watch()
-            bus.connect("message", self._on_pipeline_message)
-            
-            return True
-            
         except Exception as err:
-            _LOGGER.error("Error creating audio pipeline: %s", err)
-            return False
+            _LOGGER.error("Error during cleanup: %s", err)
             
-    def _build_pipeline_string(self) -> str:
-        """Build GStreamer pipeline string based on codec and settings."""
-        # Base pipeline for Bluetooth audio capture
-        pipeline_parts = [
-            # Bluetooth audio source (PulseAudio)
-            f"pulsesrc device=bluez_source.{self._bluetooth_address.replace(':', '_')}.a2dp_source",
-            
-            # Audio conversion and processing
-            "audioconvert",
-            "audioresample",
-            f"audio/x-raw,format=S16LE,rate={self._sample_rate},channels={self._channels}",
-            
-            # Audio effects and processing
-            "volume volume=1.0",
-            "audioconvert",
-            
-            # Output to AirPlay (via file sink for now, will be replaced with AirPlay sink)
-            "wavenc",
-            f"filesink location=/tmp/airplay_audio_{self._airplay_name.replace(' ', '_')}.wav"
-        ]
-        
-        return " ! ".join(pipeline_parts)
-        
-    def _run_pipeline(self) -> None:
-        """Run the GStreamer pipeline in a separate thread."""
+    async def _stream_audio(self) -> None:
+        """Stream audio data to AirPlay endpoint."""
         try:
-            self._loop = GLib.MainLoop()
-            self._is_running = True
+            # Create HTTP session for streaming
+            self._session = aiohttp.ClientSession()
             
-            # Start the pipeline
-            ret = self._pipeline.set_state(Gst.State.PLAYING)
-            if ret == Gst.StateChangeReturn.FAILURE:
-                _LOGGER.error("Failed to start GStreamer pipeline")
-                return
-                
-            _LOGGER.info("GStreamer pipeline started")
+            # Wait for audio file to be created and have some data
+            await asyncio.sleep(1)
             
-            # Run the main loop
-            self._loop.run()
-            
-        except Exception as err:
-            _LOGGER.error("Error running pipeline: %s", err)
-        finally:
-            self._is_running = False
-            
-    def _on_pipeline_message(self, bus: Any, message: Any) -> bool:
-        """Handle GStreamer pipeline messages."""
-        try:
-            msg_type = message.type
-            
-            if msg_type == Gst.MessageType.ERROR:
-                err, debug = message.parse_error()
-                _LOGGER.error("Pipeline error: %s - %s", err, debug)
-                if self._loop:
-                    self._loop.quit()
+            while self._is_running and self._temp_audio_file:
+                try:
+                    if os.path.exists(self._temp_audio_file):
+                        # Read audio data from temporary file
+                        async with aiofiles.open(self._temp_audio_file, 'rb') as f:
+                            audio_data = await f.read(4096)  # Read in chunks
+                            
+                        if audio_data and self._audio_callback:
+                            # Call the audio callback with the data
+                            await self._audio_callback(audio_data)
+                            
+                    await asyncio.sleep(0.1)  # Small delay to prevent excessive CPU usage
                     
-            elif msg_type == Gst.MessageType.WARNING:
-                err, debug = message.parse_warning()
-                _LOGGER.warning("Pipeline warning: %s - %s", err, debug)
-                
-            elif msg_type == Gst.MessageType.INFO:
-                err, debug = message.parse_info()
-                _LOGGER.info("Pipeline info: %s - %s", err, debug)
-                
-            elif msg_type == Gst.MessageType.EOS:
-                _LOGGER.info("Pipeline reached end of stream")
-                if self._loop:
-                    self._loop.quit()
+                except Exception as err:
+                    _LOGGER.error("Error streaming audio: %s", err)
+                    await asyncio.sleep(1)  # Wait before retrying
                     
         except Exception as err:
-            _LOGGER.error("Error handling pipeline message: %s", err)
+            _LOGGER.error("Error in audio streaming task: %s", err)
             
-        return True
-        
     async def set_codec(self, codec: str) -> bool:
         """Set the audio codec for Bluetooth connection."""
         if codec not in SUPPORTED_CODECS:
@@ -202,14 +174,15 @@ class AudioEngine:
             
         try:
             # Stop current capture
-            if self._is_running:
+            was_running = self._is_running
+            if was_running:
                 await self.stop_audio_capture()
                 
             self._current_codec = codec
             _LOGGER.info("Audio codec set to: %s", SUPPORTED_CODECS[codec]['name'])
             
             # Restart capture with new codec
-            if self._is_running:
+            if was_running:
                 return await self.start_audio_capture()
                 
             return True
@@ -258,7 +231,8 @@ class AudioEngine:
             'channels': self._channels,
             'is_running': self._is_running,
             'bluetooth_address': self._bluetooth_address,
-            'airplay_name': self._airplay_name
+            'airplay_name': self._airplay_name,
+            'engine_type': 'async_pulseaudio'
         }
         
     async def check_bluetooth_audio_available(self) -> bool:
@@ -347,3 +321,32 @@ class AudioEngine:
         except Exception as err:
             _LOGGER.error("Error setting Bluetooth volume: %s", err)
             return False
+            
+    def set_audio_callback(self, callback: Callable[[bytes], None]) -> None:
+        """Set callback function for audio data."""
+        self._audio_callback = callback
+        
+    async def get_audio_latency(self) -> float:
+        """Get estimated audio latency in milliseconds."""
+        try:
+            # Use pactl to get latency information
+            source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
+            cmd = ["pactl", "list", "sources"]
+            result = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, _ = await result.communicate()
+            
+            if result.returncode == 0:
+                output = stdout.decode()
+                # Parse latency information from PulseAudio output
+                # This is a simplified implementation
+                return 100.0  # Default latency estimate in ms
+                
+            return 100.0
+            
+        except Exception as err:
+            _LOGGER.error("Error getting audio latency: %s", err)
+            return 100.0

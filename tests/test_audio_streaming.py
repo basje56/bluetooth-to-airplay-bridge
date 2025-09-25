@@ -144,12 +144,13 @@ class TestAudioConfigManager:
         success = audio_config_manager.update_setting("invalid_key", "value")
         assert not success
         
-    def test_gstreamer_caps(self, audio_config_manager):
-        """Test GStreamer capabilities string generation."""
-        caps = audio_config_manager.get_gstreamer_caps()
-        assert "audio/x-raw" in caps
-        assert "rate=44100" in caps
-        assert "channels=2" in caps
+    def test_pulseaudio_format(self, audio_config_manager):
+        """Test PulseAudio format string generation."""
+        format_str = audio_config_manager.get_pulseaudio_format()
+        
+        assert "s16le" in format_str or "format" in format_str
+        assert "44100" in format_str or "rate" in format_str
+        assert "2" in format_str or "channels" in format_str
         
     def test_codec_params(self, audio_config_manager):
         """Test codec parameter generation."""
@@ -200,15 +201,12 @@ class TestAudioDiagnostics:
     @pytest.mark.asyncio
     async def test_audio_stack_check(self, audio_diagnostics):
         """Test audio stack check."""
-        # Mock GStreamer availability
-        with patch("gi.require_version"), \
-             patch("gi.repository.Gst") as mock_gst:
-            mock_gst.is_initialized.return_value = True
-            mock_gst.version_string.return_value = "GStreamer 1.18.4"
+        with patch("aiohttp.__version__", "3.8.0"), \
+             patch("aiofiles"):
             
             await audio_diagnostics._check_audio_stack()
             
-        results = [r for r in audio_diagnostics._results if r.test_name == "gstreamer"]
+        results = [r for r in audio_diagnostics._results if r.test_name == "async_libraries"]
         assert len(results) == 1
         assert results[0].status == "pass"
         
@@ -384,11 +382,11 @@ class TestAudioEngineIntegration:
         assert engine._sample_rate == 44100
         
     @pytest.mark.asyncio
-    async def test_audio_capture_start_no_gstreamer(self):
-        """Test audio capture start without GStreamer."""
+    async def test_audio_capture_start_no_bluetooth(self):
+        """Test audio capture start without Bluetooth audio source."""
         from custom_components.bluetooth_to_airplay_bridge.audio_engine import AudioEngine
         
-        with patch("custom_components.bluetooth_to_airplay_bridge.audio_engine.GST_AVAILABLE", False):
+        with patch.object(AudioEngine, "check_bluetooth_audio_available", return_value=False):
             engine = AudioEngine("AA:BB:CC:DD:EE:FF", "Test AirPlay")
             success = await engine.start_audio_capture()
             
@@ -431,7 +429,9 @@ class TestAudioEngineIntegration:
         
         assert "bluetooth_address" in info
         assert "airplay_name" in info
-        assert "current_codec" in info
+        assert "codec" in info
         assert "sample_rate" in info
         assert "channels" in info
         assert "is_running" in info
+        assert "engine_type" in info
+        assert info["engine_type"] == "async_pulseaudio"

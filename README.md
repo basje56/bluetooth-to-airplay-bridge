@@ -276,13 +276,13 @@ data:
 - Home Assistant 2024.1.0 or later
 - Bluetooth adapter on the Home Assistant host
 - `bluetoothctl` command available (usually part of BlueZ package)
-- GStreamer 1.14+ with Python bindings (for advanced audio processing)
-- PyGObject for GStreamer integration (enables enhanced audio features)
+- PulseAudio for audio capture and processing
 
 ### Dependencies (Automatically Installed)
 
 The integration automatically installs these Python dependencies:
-- `pygobject>=3.42.0` - GStreamer integration for audio processing
+- `aiohttp>=3.8.0` - Asynchronous HTTP client for streaming
+- `aiofiles>=23.0.0` - Asynchronous file operations
 - `zeroconf>=0.47.0` - AirPlay device discovery via mDNS
 
 **Note**: As of v0.12, the unused `pycairo`, `cryptography`, and `pydbus` dependencies have been removed for improved installation performance and reduced system requirements.

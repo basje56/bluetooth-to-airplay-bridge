@@ -338,6 +338,22 @@ class AudioConfigManager:
                
         return caps
         
+    def get_pulseaudio_format(self) -> str:
+        """Get PulseAudio format string for current settings."""
+        settings = self._current_settings
+        
+        # Convert bit depth to PulseAudio format
+        if settings.bit_depth.value == 16:
+            format_str = "s16le"
+        elif settings.bit_depth.value == 24:
+            format_str = "s24le"
+        elif settings.bit_depth.value == 32:
+            format_str = "s32le"
+        else:
+            format_str = "s16le"  # Default fallback
+            
+        return f"{format_str},{settings.sample_rate.value},{settings.channels}"
+        
     def get_codec_params(self) -> dict[str, Any]:
         """Get codec-specific parameters for current settings."""
         settings = self._current_settings
