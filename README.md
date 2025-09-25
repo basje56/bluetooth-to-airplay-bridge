@@ -245,38 +245,11 @@ data:
 
 ## Requirements
 
-### Core Requirements (Automatically Installed)
 - Home Assistant 2023.1.0 or later
 - Bluetooth adapter on the Home Assistant host
 - `bluetoothctl` command available (usually part of BlueZ package)
-
-### Optional Dependencies (Enhanced Audio Features)
-The integration works without these, but they enable advanced audio processing:
-
-- **GStreamer 1.14+** with Python bindings (for professional audio pipeline management)
-- **PyGObject** for GStreamer integration (enables enhanced audio features)
-
-#### Installing Optional Dependencies
-
-**Option 1: System Package Manager (Recommended)**
-```bash
-# Ubuntu/Debian
-sudo apt-get install gstreamer1.0-dev libgirepository1.0-dev python3-gi
-
-# macOS (with Homebrew)
-brew install gstreamer gobject-introspection pygobject3
-
-# Fedora/RHEL
-sudo dnf install gstreamer1-devel gobject-introspection-devel python3-gobject
-```
-
-**Option 2: Python Package (Advanced Users)**
-```bash
-# Install system dependencies first, then:
-pip install -r requirements_optional.txt
-```
-
-> **Note**: If you encounter installation errors with `pygobject` or `pycairo`, the integration will still work with basic functionality. The optional dependencies only enhance audio processing capabilities.
+- GStreamer 1.14+ with Python bindings (for advanced audio processing)
+- PyGObject for GStreamer integration (optional, enables enhanced audio features)
 
 ## Troubleshooting
 
