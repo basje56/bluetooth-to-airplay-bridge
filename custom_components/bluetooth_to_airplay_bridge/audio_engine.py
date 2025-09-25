@@ -236,88 +236,125 @@ class AudioEngine:
         }
     
     async def _check_pactl_available(self) -> bool:
-        """Check if pactl command is available."""
+        """Check if pactl command is available and working."""
         try:
-            result = await asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec(
                 "pactl", "--version",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            await result.communicate()
-            return result.returncode == 0
-        except (FileNotFoundError, OSError):
-            return False
-        
-    async def check_bluetooth_audio_available(self) -> bool:
-        """Check if Bluetooth audio source is available."""
-        try:
-            # Check if pactl is available first
-            if not await self._check_pactl_available():
-                _LOGGER.warning("pactl not available, assuming Bluetooth audio is available")
-                # In HAOS environment without pactl, assume audio is available
-                # The actual audio capture will handle any issues
-                return True
+            stdout, stderr = await process.communicate()
             
-            # Check if PulseAudio source exists for this device
-            cmd = ["pactl", "list", "sources", "short"]
-            result = await asyncio.create_subprocess_exec(
+            if process.returncode == 0:
+                version_info = stdout.decode().strip()
+                _LOGGER.debug("PulseAudio pactl available: %s", version_info)
+                return True
+            else:
+                _LOGGER.warning("pactl command failed: %s", stderr.decode())
+                return False
+                
+        except FileNotFoundError:
+            _LOGGER.error("pactl command not found - PulseAudio not installed")
+            return False
+        except Exception as err:
+            _LOGGER.error("Error checking pactl availability: %s", err)
+            return False
+    
+    async def _get_bluetooth_source_name(self) -> str:
+        """Get the PulseAudio source name for the Bluetooth device."""
+        # Standard BlueZ source naming convention
+        mac_formatted = self._bluetooth_address.replace(':', '_')
+        return f"bluez_source.{mac_formatted}.a2dp_source"
+    
+    async def _execute_pactl_command(self, args: list[str]) -> tuple[bool, str, str]:
+        """Execute a pactl command and return success status, stdout, stderr."""
+        try:
+            if not await self._check_pactl_available():
+                return False, "", "pactl not available"
+            
+            cmd = ["pactl"] + args
+            _LOGGER.debug("Executing pactl command: %s", " ".join(cmd))
+            
+            process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            stdout, _ = await result.communicate()
+            stdout, stderr = await process.communicate()
             
-            if result.returncode == 0:
-                output = stdout.decode()
-                source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
-                return source_name in output
-                
-            return False
+            success = process.returncode == 0
+            stdout_str = stdout.decode().strip()
+            stderr_str = stderr.decode().strip()
+            
+            if not success:
+                _LOGGER.warning("pactl command failed: %s", stderr_str)
+            
+            return success, stdout_str, stderr_str
+            
+        except Exception as err:
+            _LOGGER.error("Error executing pactl command: %s", err)
+            return False, "", str(err)
+    
+    async def check_bluetooth_audio_available(self) -> bool:
+        """Check if Bluetooth audio source is available in PulseAudio."""
+        try:
+            success, stdout, _ = await self._execute_pactl_command(["list", "sources", "short"])
+            
+            if not success:
+                _LOGGER.error("Failed to list PulseAudio sources")
+                return False
+            
+            source_name = await self._get_bluetooth_source_name()
+            is_available = source_name in stdout
+            
+            if is_available:
+                _LOGGER.info("Bluetooth audio source found: %s", source_name)
+            else:
+                _LOGGER.warning("Bluetooth audio source not found: %s", source_name)
+                _LOGGER.debug("Available sources:\n%s", stdout)
+            
+            return is_available
             
         except Exception as err:
             _LOGGER.error("Error checking Bluetooth audio availability: %s", err)
-            # Return True as fallback to allow the integration to continue
-            return True
+            return False
     
     async def get_bluetooth_volume(self) -> float:
         """Get current Bluetooth device volume (0.0-1.0)."""
         try:
-            # Check if pactl is available first
-            if not await self._check_pactl_available():
-                _LOGGER.debug("pactl not available, returning default volume")
-                return 0.5  # Default volume when pactl is not available
+            success, stdout, _ = await self._execute_pactl_command(["list", "sources"])
             
-            # Get volume from PulseAudio source
-            source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
-            cmd = ["pactl", "list", "sources"]
-            result = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, _ = await result.communicate()
+            if not success:
+                _LOGGER.error("Failed to get source information")
+                return 0.5
             
-            if result.returncode == 0:
-                output = stdout.decode()
-                lines = output.split('\n')
-                
-                # Find our source and get volume
-                in_source = False
-                for line in lines:
-                    if source_name in line:
-                        in_source = True
-                    elif in_source and "Volume:" in line:
-                        # Parse volume percentage
+            source_name = await self._get_bluetooth_source_name()
+            lines = stdout.split('\n')
+            
+            # Parse PulseAudio source list to find our device
+            current_source = None
+            for i, line in enumerate(lines):
+                if "Source #" in line:
+                    current_source = None
+                elif current_source is None and f"Name: {source_name}" in line:
+                    current_source = source_name
+                elif current_source == source_name and "Volume:" in line:
+                    # Parse volume line: "Volume: front-left: 65536 / 100% / 0.00 dB"
+                    try:
+                        # Find percentage values
                         parts = line.split()
                         for part in parts:
                             if part.endswith('%'):
                                 volume_percent = int(part.rstrip('%'))
-                                return volume_percent / 100.0
+                                volume = max(0.0, min(1.0, volume_percent / 100.0))
+                                _LOGGER.debug("Bluetooth volume: %d%% (%.2f)", volume_percent, volume)
+                                return volume
+                    except (ValueError, IndexError) as err:
+                        _LOGGER.warning("Failed to parse volume from line '%s': %s", line, err)
                         break
-                    elif in_source and line.strip() == "":
-                        break
-                        
-            return 0.5  # Default volume
+            
+            _LOGGER.warning("Could not find volume for Bluetooth source: %s", source_name)
+            return 0.5
             
         except Exception as err:
             _LOGGER.error("Error getting Bluetooth volume: %s", err)
@@ -326,33 +363,72 @@ class AudioEngine:
     async def set_bluetooth_volume(self, volume: float) -> bool:
         """Set Bluetooth device volume (0.0-1.0)."""
         try:
-            # Check if pactl is available first
-            if not await self._check_pactl_available():
-                _LOGGER.debug("pactl not available, cannot set volume")
-                return False  # Cannot set volume without pactl
+            # Validate and clamp volume
+            volume = max(0.0, min(1.0, volume))
+            volume_percent = int(volume * 100)
             
-            volume_percent = max(0, min(100, int(volume * 100)))
-            source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
+            source_name = await self._get_bluetooth_source_name()
             
-            cmd = ["pactl", "set-source-volume", source_name, f"{volume_percent}%"]
-            result = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            await result.communicate()
+            # Set volume using pactl
+            success, _, stderr = await self._execute_pactl_command([
+                "set-source-volume", 
+                source_name, 
+                f"{volume_percent}%"
+            ])
             
-            if result.returncode == 0:
-                _LOGGER.debug("Set Bluetooth volume to %d%%", volume_percent)
+            if success:
+                _LOGGER.info("Set Bluetooth volume to %d%% (%.2f)", volume_percent, volume)
                 return True
             else:
-                _LOGGER.warning("Failed to set Bluetooth volume")
+                _LOGGER.error("Failed to set Bluetooth volume: %s", stderr)
                 return False
                 
         except Exception as err:
             _LOGGER.error("Error setting Bluetooth volume: %s", err)
             return False
+    
+    async def get_bluetooth_source_info(self) -> dict[str, Any]:
+        """Get detailed information about the Bluetooth audio source."""
+        try:
+            success, stdout, _ = await self._execute_pactl_command(["list", "sources"])
             
+            if not success:
+                return {}
+            
+            source_name = await self._get_bluetooth_source_name()
+            lines = stdout.split('\n')
+            
+            # Parse source information
+            info = {}
+            current_source = None
+            
+            for line in lines:
+                line = line.strip()
+                if "Source #" in line:
+                    current_source = None
+                elif current_source is None and f"Name: {source_name}" in line:
+                    current_source = source_name
+                    info['name'] = source_name
+                elif current_source == source_name:
+                    if line.startswith("Description:"):
+                        info['description'] = line.split(":", 1)[1].strip()
+                    elif line.startswith("Sample Specification:"):
+                        info['sample_spec'] = line.split(":", 1)[1].strip()
+                    elif line.startswith("Channel Map:"):
+                        info['channel_map'] = line.split(":", 1)[1].strip()
+                    elif line.startswith("State:"):
+                        info['state'] = line.split(":", 1)[1].strip()
+                    elif "Volume:" in line:
+                        info['volume_line'] = line
+                    elif line.startswith("Latency:"):
+                        info['latency'] = line.split(":", 1)[1].strip()
+            
+            return info
+            
+        except Exception as err:
+            _LOGGER.error("Error getting Bluetooth source info: %s", err)
+            return {}
+    
     def set_audio_callback(self, callback: Callable[[bytes], None]) -> None:
         """Set callback function for audio data."""
         self._audio_callback = callback
@@ -360,29 +436,25 @@ class AudioEngine:
     async def get_audio_latency(self) -> float:
         """Get estimated audio latency in milliseconds."""
         try:
-            # Check if pactl is available first
-            if not await self._check_pactl_available():
-                _LOGGER.debug("pactl not available, returning default latency")
-                return 100.0  # Default latency estimate when pactl is not available
+            source_info = await self.get_bluetooth_source_info()
             
-            # Use pactl to get latency information
-            source_name = f"bluez_source.{self._bluetooth_address.replace(':', '_')}"
-            cmd = ["pactl", "list", "sources"]
-            result = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, _ = await result.communicate()
+            if 'latency' in source_info:
+                latency_str = source_info['latency']
+                try:
+                    # Parse latency string like "123456 usec"
+                    if 'usec' in latency_str:
+                        usec = int(latency_str.split()[0])
+                        latency_ms = usec / 1000.0
+                        _LOGGER.debug("Bluetooth audio latency: %.1f ms", latency_ms)
+                        return latency_ms
+                except (ValueError, IndexError):
+                    _LOGGER.warning("Failed to parse latency: %s", latency_str)
             
-            if result.returncode == 0:
-                output = stdout.decode()
-                # Parse latency information from PulseAudio output
-                # This is a simplified implementation
-                return 100.0  # Default latency estimate in ms
-                
-            return 100.0
+            # Default latency estimate for Bluetooth A2DP
+            default_latency = 150.0
+            _LOGGER.debug("Using default Bluetooth latency: %.1f ms", default_latency)
+            return default_latency
             
         except Exception as err:
             _LOGGER.error("Error getting audio latency: %s", err)
-            return 100.0
+            return 150.0
