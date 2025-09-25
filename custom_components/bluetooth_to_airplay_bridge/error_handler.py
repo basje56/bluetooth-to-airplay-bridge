@@ -279,7 +279,7 @@ class ErrorHandler:
             return ErrorType.AUDIO_ERROR, ErrorCode.AUDIO_CAPTURE_FAILED
             
         # AirPlay errors
-        if any(keyword in exc_str for keyword in ["airplay", "shairport", "mdns"]):
+        if any(keyword in exc_str for keyword in ["airplay", "mdns"]):
             if "mdns" in exc_str or "zeroconf" in exc_str:
                 return ErrorType.AIRPLAY_ERROR, ErrorCode.AIRPLAY_MDNS_FAILED
             return ErrorType.AIRPLAY_ERROR, ErrorCode.AIRPLAY_SERVER_START_FAILED
@@ -316,9 +316,10 @@ class ErrorHandler:
                 "Ensure aiohttp and aiofiles are installed for async audio processing"
             ],
             ErrorCode.AIRPLAY_SERVER_START_FAILED: [
-                "Install shairport-sync: sudo apt install shairport-sync",
                 "Check port 5000 is not in use: netstat -ln | grep 5000",
-                "Verify network interface is available"
+                "Verify aiohttp is available for async AirPlay server",
+                "Ensure network interface is available",
+                "Check Home Assistant logs for detailed error information"
             ],
             ErrorCode.DEPENDENCY_MISSING: [
                 "Install required dependencies from manifest.json",
