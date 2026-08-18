@@ -5,11 +5,20 @@
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
 
-**Latest Release: v0.14.1** - Home Assistant 2025.x Compatibility & Enhanced Stability
+**Latest Release: v0.15.2** - Bluetooth Device Discovery Fixes
 
 A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, allowing you to stream audio from Bluetooth speakers through AirPlay protocol with advanced audio configuration and quality control.
 
-## What's New in v0.14.1
+## What's New in v0.15.2
+
+🔧 **Bluetooth Device Discovery Fixes**
+- ✅ Manual scan step no longer filters discovered devices by a hardcoded name keyword list — speakers with no advertised name (shown as "Unknown Device") or an unrecognized name now appear in the device list instead of being silently dropped
+- ✅ Removed non-functional `bluetooth` discovery matchers from the manifest — they declared classic BR/EDR SDP service UUIDs, which Home Assistant's BLE-only discovery can never match, so they could never trigger automatic discovery for this integration's target devices
+- ✅ The manual scan-and-select flow remains the reliable way to add a Bluetooth speaker
+
+## Previous Releases
+
+### v0.14.1 - Home Assistant 2025.x Compatibility & Enhanced Stability
 
 🔧 **Home Assistant 2025.x Compatibility Fixes**
 - ✅ Fixed `AttributeError: '_process'` errors in media player and metadata manager
@@ -24,8 +33,6 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
 - ✅ Better integration lifecycle management and cleanup
 - ✅ Enhanced diagnostics and troubleshooting capabilities
 - ✅ Production-ready error recovery and graceful degradation
-
-## Previous Releases
 
 ### v0.14.0 - Major Architecture Improvements & Enhanced Features
 
@@ -145,7 +152,7 @@ A Home Assistant integration that bridges Bluetooth audio devices to AirPlay, al
    - **Category**: `Integration`
 6. **Click "Add"**
 7. **Search** for "Bluetooth to AirPlay Bridge" in HACS
-8. **Install** the integration (v0.14.1 or later recommended)
+8. **Install** the integration (v0.15.2 or later recommended)
 9. **Restart** Home Assistant
 10. **Add Integration** via Settings → Devices & Services → Add Integration
 
@@ -437,7 +444,7 @@ bluetoothctl info [DEVICE_ADDRESS]
 
 ### Current Status: ✅ Fully Compatible with Latest Home Assistant
 
-This integration is **fully functional in HACS** with v0.14.1 and can be installed immediately using the custom repository method above. All compatibility issues with Home Assistant 2025.x have been resolved, including enhanced stability and error handling.
+This integration is **fully functional in HACS** with v0.15.2 and can be installed immediately using the custom repository method above. All compatibility issues with Home Assistant 2025.x have been resolved, including enhanced stability and error handling.
 
 ### Submitting to Official HACS Store
 
