@@ -290,17 +290,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if scanner:
                         discovered_devices = scanner.discovered_devices
                         # discovered_devices is now a list of BLEDevice objects, not a dict
+                        # List all discovered devices (including unnamed ones) and let the
+                        # user pick the right one manually, since many audio speakers don't
+                        # advertise a BLE local name that would match a keyword filter.
                         for device in discovered_devices:
-                            # Filter for audio devices
                             device_name = device.name or f"Unknown Device ({device.address})"
-                            if any(keyword in device_name.lower() for keyword in ['audio', 'speaker', 'headphone', 'earphone', 'airpods', 'beats']):
-                                devices.append({
-                                    "address": device.address,
-                                    "name": device_name,
-                                })
-                    
+                            devices.append({
+                                "address": device.address,
+                                "name": device_name,
+                            })
+
                     if devices:
-                        _LOGGER.debug("Found %d audio devices via HA Bluetooth component", len(devices))
+                        _LOGGER.debug("Found %d devices via HA Bluetooth component", len(devices))
                         return devices
                 except Exception as err:
                     _LOGGER.warning("Failed to use HA Bluetooth component: %s", err)
@@ -346,12 +347,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         if len(parts) >= 3:
                             address = parts[1]
                             name = parts[2] if len(parts) > 2 else f"Unknown Device ({address})"
-                            # Filter out devices that are clearly not audio devices
-                            if any(keyword in name.lower() for keyword in ['speaker', 'headphone', 'audio', 'sound', 'music', 'beats', 'sony', 'bose', 'jbl']):
-                                devices.append({
-                                    "address": address,
-                                    "name": name,
-                                })
+                            devices.append({
+                                "address": address,
+                                "name": name,
+                            })
             else:
                 _LOGGER.warning("bluetoothctl command failed: %s", stderr.decode() if stderr else "Unknown error")
             
